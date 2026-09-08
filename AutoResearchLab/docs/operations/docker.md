@@ -18,15 +18,26 @@ Use Mock mode from the UI for the first smoke test. It requires no model API
 key. Real provider credentials belong in local `.env` or the deployment secret
 manager, never in a committed Compose file.
 
-## Gemini API configuration
+## LLM API configuration
 
-This project currently calls Gemini through the Google GenAI SDK. Do not put a
-key in the browser's **API Key** field: that setting is persisted in SQLite.
-Instead, create the ignored `.env` file from `.env.example` and set:
+Do not put a key in the browser's **API Key** field: that setting is persisted
+in SQLite. Instead, create the ignored `.env` file from `.env.example`.
+
+For Gemini:
 
 ```dotenv
+MAARS_LLM_PROVIDER=gemini
 MAARS_API_KEY=your_Gemini_API_key
 MAARS_MODEL=gemini-2.5-flash
+```
+
+For DeepSeek's OpenAI-compatible API:
+
+```dotenv
+MAARS_LLM_PROVIDER=deepseek
+MAARS_API_KEY=your_DeepSeek_API_key
+MAARS_API_BASE_URL=https://api.deepseek.com
+MAARS_MODEL=deepseek-chat
 ```
 
 Restart the service after changing `.env`:
@@ -39,7 +50,9 @@ Then open Settings (Alt+Shift+S on Windows/Linux), select **LLM** for the
 agents you want to run, and save. Leave the browser API Key field empty. Agent
 modes and preset selection are saved in SQLite, but `MAARS_API_KEY` from the
 environment overrides UI credentials at runtime and is never persisted by the
-application. Use **Mock** mode whenever you want an offline, no-cost test.
+application. DeepSeek supports the single-turn **LLM** mode; **Agent** mode
+uses Google ADK and remains Gemini-only. Use **Mock** mode whenever you want
+an offline, no-cost test.
 
 Useful lifecycle commands:
 

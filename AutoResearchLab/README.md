@@ -38,14 +38,15 @@ Task Agent Docker mode is deliberately not enabled by the default Compose
 profile. It needs access to a Docker daemon; the opt-in
 `compose.task-agent.yaml` override is for trusted development machines only.
 
-### Gemini API key
+### LLM API key
 
 Keep your key out of Git and out of the browser settings. After copying
-`.env.example` to the ignored `.env`, set `MAARS_API_KEY` (and optionally
-`MAARS_MODEL`, which defaults to `gemini-2.5-flash`). Restart Compose, then use
+`.env.example` to the ignored `.env`, set `MAARS_LLM_PROVIDER`,
+`MAARS_API_KEY`, and `MAARS_MODEL`. Gemini is the default; DeepSeek is supported
+through its OpenAI-compatible API in **LLM** mode. Restart Compose, then use
 **Settings → AI Config** to select **LLM** for the agents you want to run; leave
 the settings-page API Key field blank. Full details are in
-[Docker operations](docs/operations/docker.md#gemini-api-configuration).
+[Docker operations](docs/operations/docker.md#llm-api-configuration).
 
 ### Local Python
 

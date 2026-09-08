@@ -6,6 +6,7 @@ from db.db_settings import _resolve_config
 def test_environment_credentials_override_saved_preset(monkeypatch):
     monkeypatch.setenv("MAARS_API_KEY", "environment-secret")
     monkeypatch.setenv("MAARS_MODEL", "gemini-2.5-flash")
+    monkeypatch.setenv("MAARS_LLM_PROVIDER", "deepseek")
 
     config = _resolve_config(
         {
@@ -28,4 +29,5 @@ def test_environment_credentials_override_saved_preset(monkeypatch):
 
     assert config["apiKey"] == "environment-secret"
     assert config["model"] == "gemini-2.5-flash"
+    assert config["provider"] == "deepseek"
     assert config["ideaUseMock"] is False

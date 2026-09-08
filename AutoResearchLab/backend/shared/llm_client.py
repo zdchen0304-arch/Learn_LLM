@@ -8,20 +8,132 @@ from typing import Any, Callable, List, Optional, Union
 
 from google import genai
 from google.genai import types
+from openai import AsyncOpenAI
 
 from loguru import logger
 
 from shared.constants import DEFAULT_MODEL, LLM_REQUEST_TIMEOUT, LLM_STREAM_CHUNK_TIMEOUT
+
+DEEPSEEK_DEFAULT_MODEL = "deepseek-chat"
+DEEPSEEK_DEFAULT_BASE_URL = "https://api.deepseek.com"
 
 
 def merge_phase_config(api_config: dict, phase: str) -> dict:
     """从 api_config 提取 LLM 连接参数。phase 参数保留用于未来扩展，当前不做区分。"""
     cfg = dict(api_config or {})
     return {
+        "provider": cfg.get("provider") or cfg.get("llmProvider") or "gemini",
         "baseUrl": cfg.get("baseUrl") or cfg.get("base_url"),
         "apiKey": cfg.get("apiKey") or cfg.get("api_key"),
-        "model": cfg.get("model") or DEFAULT_MODEL,
+        "model": cfg.get("model"),
     }
+
+
+def _provider_for(cfg: dict) -> str:
+    """Return a supported provider identifier, with a clear failure otherwise."""
+    provider = str(cfg.get("provider") or cfg.get("llmProvider") or "gemini").strip().lower()
+    if provider in {"gemini", "google"}:
+        return "gemini"
+    if provider == "deepseek":
+        return "deepseek"
+    raise RuntimeError(f"Unsupported LLM provider: {provider}. Use gemini or deepseek.")
+
+
+def _model_for(cfg: dict, provider: str) -> str:
+    """Choose a provider-appropriate default model only when none is configured."""
+    configured_model = str(cfg.get("model") or "").strip()
+    if configured_model:
+        return configured_model
+    return DEEPSEEK_DEFAULT_MODEL if provider == "deepseek" else DEFAULT_MODEL
+
+
+async def _deepseek_chat_completion(
+    messages: list[dict],
+    cfg: dict,
+    on_chunk: Optional[Callable[[str], None]],
+    abort_event: Optional[Any],
+    stream: bool,
+    temperature: Optional[float],
+    response_format: Optional[dict],
+    tools: Optional[List[dict]],
+) -> Union[str, dict]:
+    """Call DeepSeek's OpenAI-compatible chat-completions endpoint."""
+    api_key = str(cfg.get("apiKey") or cfg.get("api_key") or "").strip()
+    if not api_key:
+        raise RuntimeError("DeepSeek API key is missing. Set MAARS_API_KEY in .env.")
+
+    base_url = str(cfg.get("baseUrl") or cfg.get("base_url") or DEEPSEEK_DEFAULT_BASE_URL).strip()
+    request: dict = {"model": _model_for(cfg, "deepseek"), "messages": messages}
+    if temperature is not None:
+        request["temperature"] = temperature
+    if response_format and response_format.get("type") == "json_object":
+        request["response_format"] = {"type": "json_object"}
+    if tools:
+        request["tools"] = tools
+        stream = False
+
+    client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+    try:
+        if abort_event and abort_event.is_set():
+            raise asyncio.CancelledError("Aborted")
+        if stream:
+            stream_response = await asyncio.wait_for(
+                client.chat.completions.create(**request, stream=True),
+                timeout=LLM_REQUEST_TIMEOUT,
+            )
+            full_content: list[str] = []
+            async for chunk in stream_response:
+                if abort_event and abort_event.is_set():
+                    raise asyncio.CancelledError("Aborted")
+                text = (chunk.choices[0].delta.content or "") if chunk.choices else ""
+                if text:
+                    if on_chunk:
+                        result = on_chunk(text)
+                        if asyncio.iscoroutine(result):
+                            await result
+                    full_content.append(text)
+            return "".join(full_content)
+
+        response = await asyncio.wait_for(
+            client.chat.completions.create(**request, stream=False),
+            timeout=LLM_REQUEST_TIMEOUT,
+        )
+    except asyncio.CancelledError:
+        raise
+    except TimeoutError:
+        raise RuntimeError(f"DeepSeek request timed out after {LLM_REQUEST_TIMEOUT}s")
+    except asyncio.TimeoutError:
+        raise RuntimeError(f"DeepSeek request timed out after {LLM_REQUEST_TIMEOUT}s")
+    except Exception as e:
+        raise RuntimeError(f"DeepSeek API error: {e}") from e
+    finally:
+        await client.close()
+
+    if abort_event and abort_event.is_set():
+        raise asyncio.CancelledError("Aborted")
+    if not response.choices:
+        return ""
+
+    choice = response.choices[0]
+    message = choice.message
+    tool_calls = getattr(message, "tool_calls", None) or []
+    if tool_calls:
+        return {
+            "content": message.content or "",
+            "tool_calls": [
+                {
+                    "id": call.id,
+                    "type": call.type or "function",
+                    "function": {
+                        "name": call.function.name,
+                        "arguments": call.function.arguments,
+                    },
+                }
+                for call in tool_calls
+            ],
+            "finish_reason": choice.finish_reason or "tool_calls",
+        }
+    return message.content or ""
 
 
 def _tools_to_gemini(tools: List[dict]) -> List[Any]:
@@ -132,11 +244,17 @@ async def chat_completion(
     tools: Optional[List[dict]] = None,
 ) -> Union[str, dict]:
     """
-    Call Gemini chat completions API.
+    Call the configured provider's chat-completions API.
     When tools provided: returns dict with content, tool_calls, finish_reason, gemini_model_content.
     """
     cfg = dict(api_config or {})
-    model = cfg.get("model") or DEFAULT_MODEL
+    provider = _provider_for(cfg)
+    if provider == "deepseek":
+        return await _deepseek_chat_completion(
+            messages, cfg, on_chunk, abort_event, stream, temperature, response_format, tools
+        )
+
+    model = _model_for(cfg, provider)
     temp = temperature if temperature is not None else cfg.get("temperature")
     api_key = cfg.get("apiKey") or cfg.get("api_key") or ""
 

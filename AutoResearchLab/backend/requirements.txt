@@ -5,6 +5,7 @@ aiofiles>=23.2.0
 networkx>=3.0
 google-genai>=1.0.0
 google-adk>=1.0.0
+openai>=1.0.0
 orjson>=3.9.0
 json-repair>=0.7.0
 loguru>=0.7.0

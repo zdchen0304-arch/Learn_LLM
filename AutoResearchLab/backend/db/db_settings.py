@@ -29,6 +29,7 @@ def _apply_environment_credentials(cfg: dict) -> dict:
         "MAARS_API_KEY": "apiKey",
         "MAARS_MODEL": "model",
         "MAARS_API_BASE_URL": "baseUrl",
+        "MAARS_LLM_PROVIDER": "provider",
     }
     for environment_name, config_name in environment_fields.items():
         value = os.getenv(environment_name, "").strip()

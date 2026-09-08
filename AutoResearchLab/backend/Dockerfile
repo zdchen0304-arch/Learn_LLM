@@ -10,10 +10,14 @@ WORKDIR /app/backend
 RUN addgroup --system maars \
     && adduser --system --ingroup maars --home /nonexistent maars
 
-COPY backend/requirements.txt backend/requirements.container.txt ./
+# Keep the large CPU-only PyTorch layer independent from application packages,
+# so ordinary dependency edits do not repeatedly download it.
+COPY backend/requirements.container.txt ./
 RUN python -m pip install --upgrade pip \
-    && python -m pip install --no-cache-dir -r requirements.container.txt \
-    && python -m pip install --no-cache-dir -r requirements.txt
+    && python -m pip install --no-cache-dir -r requirements.container.txt
+
+COPY backend/requirements.txt ./
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=maars:maars backend/ /app/backend/
 COPY --chown=maars:maars frontend/ /app/frontend/

@@ -1,0 +1,70 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python env
+.venv/
+venv/
+env/
+
+# backend/db contains both source code and runtime data.
+# Ignore runtime/generated content, keep Python source tracked.
+backend/db/**
+!backend/db/
+!backend/db/*.py
+
+
+# Atomic write leftovers (crash recovery)
+*.tmp
+
+# Download temp files
+*.qkdownloading
+
+# Test & coverage
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Node (skills may use npm/pnpm)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE & editor
+.cursor
+.history
+history
+
+# Local env (secrets)
+.env
+.env.local
+.env.*.local
+
+# Cursor agent skills (local)
+.agents/
+
+# Skills lockfile (local tooling)
+skills-lock.json
+
+# Logs
+*.log
+*.log.*
+
+# JetBrains IDE
+.idea/
+
+# Ruff
+.ruff_cache/
+
+#sandbox
+sandbox/
+

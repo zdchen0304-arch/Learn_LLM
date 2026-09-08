@@ -1,0 +1,29 @@
+{
+  "_default": {
+    "content": {
+      "_mock": true,
+      "note": "Simulated output (Mock AI mode)"
+    },
+    "reasoning": "Analyzing task description and input artifacts. Generating output in the specified format."
+  },
+  "_default_markdown": {
+    "content": "# Mock Output\n\nSimulated content for task.\n\n(Mock AI mode)",
+    "reasoning": "Generating Markdown output based on task description."
+  },
+  "1": {
+    "content": {
+      "_mock": true,
+      "task_id": "1",
+      "note": "Simulated output (Mock AI mode)"
+    },
+    "reasoning": "Executing task 1 based on description and dependencies."
+  },
+  "2": {
+    "content": {
+      "_mock": true,
+      "task_id": "2",
+      "note": "Simulated output (Mock AI mode)"
+    },
+    "reasoning": "Executing task 2 based on description and dependencies."
+  }
+}

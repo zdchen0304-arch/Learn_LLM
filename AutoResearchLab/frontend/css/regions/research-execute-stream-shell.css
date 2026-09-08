@@ -1,0 +1,195 @@
+/**
+ * Research execute stream shell and message bubbles.
+ */
+
+#researchDetailHost.research-workbench--execute #researchExecuteStream {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.research-execute-stream-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-area-secondary);
+}
+
+.research-execute-stream-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.research-execute-stream-toggle-all {
+    border: 1px solid var(--border-color);
+    background: var(--bg-area-tertiary);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+
+.research-execute-stream-jump-latest {
+    border: 1px solid rgba(30, 136, 229, 0.25);
+    background: rgba(30, 136, 229, 0.08);
+    color: #1e88e5;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.research-execute-stream-toggle-all:hover {
+    background: var(--bg-area-elevated);
+    color: var(--text-color);
+}
+
+.research-execute-stream-jump-latest:hover {
+    background: rgba(30, 136, 229, 0.14);
+}
+
+.research-execute-stream-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 100%;
+}
+
+.research-execute-empty {
+    margin: auto;
+    max-width: 420px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.research-execute-message {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: min(78%, 820px);
+}
+
+.research-execute-message--system {
+    align-self: center;
+    max-width: min(90%, 860px);
+}
+
+.research-execute-message--assistant,
+.research-execute-message--output,
+.research-execute-message--error {
+    align-self: flex-start;
+}
+
+.research-execute-message-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.research-execute-message-task {
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.research-execute-message-kind {
+    padding: 2px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-area-secondary);
+}
+
+.research-execute-message-bubble {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-area-tertiary);
+    box-shadow: var(--shadow-inset);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.research-execute-message--assistant .research-execute-message-bubble {
+    background: linear-gradient(180deg, rgba(89, 136, 255, 0.08) 0%, rgba(89, 136, 255, 0.03) 100%);
+}
+
+.research-execute-message--output .research-execute-message-bubble {
+    background: linear-gradient(180deg, rgba(74, 222, 128, 0.08) 0%, rgba(74, 222, 128, 0.03) 100%);
+}
+
+.research-execute-message--error .research-execute-message-bubble {
+    background: linear-gradient(180deg, rgba(248, 113, 113, 0.10) 0%, rgba(248, 113, 113, 0.03) 100%);
+}
+
+.research-execute-message-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.research-execute-message-token-meta {
+    margin-top: -2px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--text-muted);
+}
+
+.research-execute-message-body {
+    color: var(--text-secondary);
+}
+
+.research-execute-message-status {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.research-execute-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border-color);
+}
+
+.research-execute-status-dot.is-doing {
+    background: #f59e0b;
+}
+
+.research-execute-status-dot.is-done {
+    background: #22c55e;
+}
+
+.research-execute-status-dot.is-failed {
+    background: #ef4444;
+}
+
+.research-execute-status-dot.is-pending {
+    background: #94a3b8;
+}

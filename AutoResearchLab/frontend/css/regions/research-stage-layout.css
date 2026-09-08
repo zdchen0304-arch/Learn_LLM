@@ -1,0 +1,302 @@
+/**
+ * Research views and stage layout shell.
+ */
+
+.home-view {
+    min-height: 56vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-view-inner {
+    width: 100%;
+    max-width: 820px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.home-view-prompt {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.home-view-input {
+    flex: 1;
+}
+
+.research-view {
+    display: block;
+}
+
+.research-topbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: var(--gap);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.research-breadcrumb {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.research-title {
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.research-stage-progress {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+}
+
+.research-stage-row {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-top: 2px;
+}
+
+.research-stage-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+    max-width: 220px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-area-tertiary);
+}
+
+.research-stage-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.2;
+    min-height: 14px;
+}
+
+.research-stage-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.research-stage-action-btn {
+    border: 1px solid var(--border-color);
+    background: var(--bg-white);
+    color: var(--text-color);
+    border-radius: var(--btn-radius);
+    font-size: 11px;
+    font-weight: var(--button-font-weight);
+    line-height: 1;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: var(--btn-transition);
+}
+
+.research-stage-action-btn:hover:not(:disabled) {
+    background: var(--btn-hover-bg);
+    border-color: var(--btn-hover-border);
+}
+
+.research-stage-action-btn:active:not(:disabled) {
+    background: var(--btn-active-bg);
+}
+
+.research-stage-action-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.research-stage-action-btn.is-danger {
+    border: 1px solid var(--failure-border);
+    background: var(--failure-bg);
+    color: var(--failure-text);
+}
+
+.research-stage-action-btn.is-danger:hover:not(:disabled) {
+    background: var(--failure-bg-hover);
+    border-color: var(--failure-border);
+}
+
+.research-stage-action-btn.is-danger:active:not(:disabled) {
+    background: var(--failure-bg-active);
+}
+
+.research-stage-btn {
+    border: 1px solid var(--border-color);
+    background: var(--bg-area-tertiary);
+    color: var(--text-secondary);
+    padding: var(--button-padding-y) var(--button-padding-x);
+    border-radius: var(--btn-radius);
+    font-size: var(--button-font-size);
+    font-weight: var(--button-font-weight);
+    line-height: 1;
+    cursor: pointer;
+    position: relative;
+    transition: var(--btn-transition);
+}
+
+.research-stage-btn:hover:not(:disabled):not(.is-completed):not(.is-active) {
+    background: var(--btn-hover-bg);
+    border-color: var(--btn-hover-border);
+}
+
+.research-stage-btn:active:not(:disabled):not(.is-completed):not(.is-active) {
+    background: var(--btn-active-bg);
+}
+
+.research-stage-btn:not(:last-child)::after {
+    content: '';
+}
+
+.research-stage-btn.is-started {
+    color: var(--text-color);
+}
+
+.research-stage-btn.is-completed {
+    border-color: var(--interactive-border-hover);
+    background: var(--bg-area-secondary);
+}
+
+.research-stage-btn.is-active {
+    color: var(--text-color);
+    border-color: var(--accent-primary-border);
+    box-shadow: 0 0 0 2px var(--accent-primary-soft);
+}
+
+.research-stage-btn[disabled],
+.research-stage-btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.research-stage-panel {
+    display: none;
+    margin-top: var(--gap);
+    min-height: var(--main-content-height);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: var(--bg-area-secondary);
+}
+
+.research-stage-panel.is-active {
+    display: block;
+}
+
+.plan-agent-thinking-tree-row.research-stage-panel {
+    display: none;
+}
+
+.plan-agent-thinking-tree-row.research-stage-panel.is-active {
+    display: flex;
+}
+
+#researchDetailHost {
+    --execute-left-ratio: 80;
+}
+
+.research-execute-splitter {
+    display: none;
+    flex: 0 0 8px;
+    width: 8px;
+    cursor: col-resize;
+    position: relative;
+    background: transparent;
+}
+
+.research-execute-splitter::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    transform: translateX(-50%);
+    border-radius: 99px;
+    background: var(--border-color);
+    opacity: 0.8;
+}
+
+#researchDetailHost.research-workbench--execute .research-execute-splitter {
+    display: block;
+}
+
+#researchDetailHost.research-workbench--plan .research-execute-splitter {
+    display: none;
+}
+
+.research-stage-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    min-height: var(--main-content-height);
+    box-sizing: border-box;
+}
+
+.research-stage-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-area-tertiary);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.research-stage-card--fill {
+    flex: 1;
+    min-height: 0;
+}
+
+.research-stage-card-header {
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-area-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.research-stage-card-body {
+    padding: 10px 12px;
+    overflow: auto;
+    min-height: 0;
+}
+
+.research-appendix {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-area-tertiary);
+    overflow: hidden;
+}
+
+.research-appendix-summary {
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-area-secondary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+}
+
+.research-appendix-body {
+    padding: 10px 12px;
+    overflow: auto;
+}

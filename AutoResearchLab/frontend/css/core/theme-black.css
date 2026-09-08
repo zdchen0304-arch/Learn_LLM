@@ -1,0 +1,115 @@
+/* ========== Black Mode (深邃黑 - neutral, no blue tint) ========== */
+[data-theme="black"] {
+    --color-white: #0a0a0a;
+    --color-black: #e8e8e8;
+    --color-gray-100: #141414;
+    --color-gray-200: #1f1f1f;
+    --color-gray-300: #2a2a2a;
+    --color-gray-400: #525252;
+    --color-gray-500: #737373;
+    --color-gray-600: #a3a3a3;
+    --color-gray-700: #d4d4d4;
+    --color-gray-800: #e5e5e5;
+
+    --bg-color: #050505;
+    --bg-white: #0a0a0a;
+    --bg-area-primary: #0f0f0f;
+    --bg-area-secondary: #141414;
+    --bg-area-tertiary: #1a1a1a;
+    --bg-input: #141414;
+    --bg-disabled: #404040;
+
+    --text-color: #e5e5e5;
+    --text-secondary: #a3a3a3;
+    --text-muted: #737373;
+    --text-light: #525252;
+    --text-on-dark: #e5e5e5;
+
+    --border-color: #262626;
+    --border-color-hover: #404040;
+    --border-disabled: #404040;
+
+    --status-undone: #1a1a1a;
+    --status-doing: #3d3000;
+    --status-doing-hover: #524000;
+    --status-doing-active: #6b5500;
+    --status-doing-accent: #e6b800;
+    --status-validating: #0f2847;
+    --status-validating-hover: #1a3a5c;
+    --status-validating-active: #254a71;
+    --status-validating-accent: #60a5fa;
+    --status-done: #0f2e14;
+    --status-done-hover: #1a4020;
+    --status-done-active: #25522a;
+    --status-done-accent: #4ade80;
+    --status-failed: #3d1a1a;
+    --status-failed-hover: #522222;
+    --status-failed-active: #6d2a2a;
+    --status-failed-border: #f87171;
+    --status-failed-text: #fca5a5;
+
+    --task-agent-idle-bg: #0f2e14;
+    --task-agent-idle-border: #4ade80;
+    --task-agent-idle-text: #4ade80;
+    --task-agent-busy-bg: #3d2a00;
+    --task-agent-busy-border: #fbbf24;
+    --task-agent-busy-text: #fbbf24;
+    --task-agent-validating-bg: #0f2847;
+    --task-agent-validating-border: #60a5fa;
+    --task-agent-validating-text: #60a5fa;
+
+    --interactive-hover: #141414;
+    --interactive-active: #1a1a1a;
+    --interactive-border-hover: #404040;
+
+    --accent-primary: #737373;
+    --accent-primary-soft: #262626;
+    --accent-primary-border: #525252;
+    --accent-text-on-primary: #fafafa;
+
+    --settings-select-hover: #404040;
+    --settings-select-active: #525252;
+    --settings-select-selected: #363636;
+    --settings-select-text: #a3a3a3;
+
+    --failure-bg: #3d1a1a;
+    --failure-bg-hover: #522222;
+    --failure-bg-active: #6d2a2a;
+    --failure-border: #f87171;
+    --failure-text: #fca5a5;
+
+    --scrollbar-track: var(--bg-area-secondary);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.24);
+
+    --tree-line-stroke: #404040;
+    --tree-idea-bg: #141414;
+    --tree-status-doing-border: #e6b800;
+    --tree-status-validating-border: #60a5fa;
+    --tree-status-done-border: #4ade80;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.7);
+    --shadow-xl: 0 4px 16px rgba(0, 0, 0, 0.7);
+    --shadow-2xl: 0 4px 20px rgba(0, 0, 0, 0.7);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-modal: 0 4px 8px rgba(0, 0, 0, 0.8);
+    --shadow-modal-dialog: 0 24px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    --shadow-overlay: rgba(0, 0, 0, 0.8);
+    --shadow-glow-doing: 0 0 6px rgba(230, 184, 0, 0.5);
+    --shadow-glow-failure: 0 0 6px rgba(248, 113, 113, 0.5);
+
+    --toast-success-bg: #0f2e14;
+    --toast-success-border: #4ade80;
+    --toast-success-text: #86efac;
+    --toast-error-bg: #3d1a1a;
+    --toast-error-border: #f87171;
+    --toast-error-text: #fca5a5;
+    --toast-warning-bg: #3d3000;
+    --toast-warning-border: #e6b800;
+    --toast-warning-text: #fbbf24;
+    --toast-info-bg: #0f2847;
+    --toast-info-border: #60a5fa;
+    --toast-info-text: #93c5fd;
+}

@@ -1,0 +1,11 @@
+# Opt-in development override for Task Agent Docker mode on trusted machines only.
+# It grants the API container control over the host Docker daemon. Do not use this
+# override on shared or production hosts without a dedicated, policy-restricted daemon.
+services:
+  maars-api:
+    build:
+      target: task-agent
+    image: maars-api-task:local
+    volumes:
+      - maars-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock

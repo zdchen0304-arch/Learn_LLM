@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release"
+  short_description: "Shared repository release workflow"
+  default_prompt: "Use $release-workflow to prepare a release for this repository."

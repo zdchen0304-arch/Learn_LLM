@@ -1,0 +1,115 @@
+/* ========== Dark Mode ========== */
+[data-theme="dark"] {
+    --color-white: #1a1a2e;
+    --color-black: #eaeaea;
+    --color-gray-100: #2d3748;
+    --color-gray-200: #4a5568;
+    --color-gray-300: #718096;
+    --color-gray-400: #a0aec0;
+    --color-gray-500: #cbd5e0;
+    --color-gray-600: #e1e8ed;
+    --color-gray-700: #f1f3f5;
+    --color-gray-800: #f5f7fa;
+
+    --bg-color: #0f0f1a;
+    --bg-white: #1a1a2e;
+    --bg-area-primary: #1e1e35;
+    --bg-area-secondary: #252540;
+    --bg-area-tertiary: #2d2d4a;
+    --bg-input: #252540;
+    --bg-disabled: #4a5568;
+
+    --text-color: #e2e8f0;
+    --text-secondary: #cbd5e0;
+    --text-muted: #a0aec0;
+    --text-light: #718096;
+    --text-on-dark: #e2e8f0;
+
+    --border-color: #2d3748;
+    --border-color-hover: #4a5568;
+    --border-disabled: #4a5568;
+
+    --status-undone: #2d3748;
+    --status-doing: #5c4a00;
+    --status-doing-hover: #7a6200;
+    --status-doing-active: #988000;
+    --status-doing-accent: #e6b800;
+    --status-validating: #1e3a5f;
+    --status-validating-hover: #2a4a7a;
+    --status-validating-active: #365a94;
+    --status-validating-accent: #64b5f6;
+    --status-done: #1b3d1f;
+    --status-done-hover: #2e5c33;
+    --status-done-active: #417b47;
+    --status-done-accent: #81c784;
+    --status-failed: #5c2a2a;
+    --status-failed-hover: #7a3838;
+    --status-failed-active: #8f4545;
+    --status-failed-border: #ff6666;
+    --status-failed-text: #ff9999;
+
+    --task-agent-idle-bg: #1b3d1f;
+    --task-agent-idle-border: #81c784;
+    --task-agent-idle-text: #81c784;
+    --task-agent-busy-bg: #5c3a00;
+    --task-agent-busy-border: #ffb74d;
+    --task-agent-busy-text: #ffb74d;
+    --task-agent-validating-bg: #1e3a5f;
+    --task-agent-validating-border: #64b5f6;
+    --task-agent-validating-text: #64b5f6;
+
+    --interactive-hover: #252540;
+    --interactive-active: #2d2d4a;
+    --interactive-border-hover: #4a5568;
+
+    --accent-primary: #94a3b8;
+    --accent-primary-soft: #1e293b;
+    --accent-primary-border: #64748b;
+    --accent-text-on-primary: #0f172a;
+
+    --settings-select-hover: #4a5568;
+    --settings-select-active: #5a6578;
+    --settings-select-selected: #3d4758;
+    --settings-select-text: #cbd5e0;
+
+    --failure-bg: #5c2a2a;
+    --failure-bg-hover: #7a3838;
+    --failure-bg-active: #8f4545;
+    --failure-border: #ff6666;
+    --failure-text: #ff9999;
+
+    --scrollbar-track: var(--bg-area-secondary);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+
+    --tree-line-stroke: #4a5568;
+    --tree-idea-bg: #252540;
+    --tree-status-doing-border: #e6b800;
+    --tree-status-validating-border: #64b5f6;
+    --tree-status-done-border: #81c784;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-modal: 0 4px 8px rgba(0, 0, 0, 0.6);
+    --shadow-modal-dialog: 0 24px 48px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --shadow-overlay: rgba(0, 0, 0, 0.6);
+    --shadow-glow-doing: 0 0 6px rgba(230, 184, 0, 0.5);
+    --shadow-glow-failure: 0 0 6px rgba(255, 102, 102, 0.5);
+
+    --toast-success-bg: #1b3d1f;
+    --toast-success-border: #81c784;
+    --toast-success-text: #a5d6a7;
+    --toast-error-bg: #5c2a2a;
+    --toast-error-border: #ff6666;
+    --toast-error-text: #ff9999;
+    --toast-warning-bg: #5c4a00;
+    --toast-warning-border: #e6b800;
+    --toast-warning-text: #ffd966;
+    --toast-info-bg: #1e3a5f;
+    --toast-info-border: #64b5f6;
+    --toast-info-text: #90caf9;
+}

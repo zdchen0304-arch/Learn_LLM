@@ -1,0 +1,52 @@
+name: AutoResearchLab CI
+
+on:
+  push:
+    paths:
+      - "AutoResearchLab/**"
+      - ".github/workflows/autoresearchlab.yml"
+  pull_request:
+    paths:
+      - "AutoResearchLab/**"
+      - ".github/workflows/autoresearchlab.yml"
+
+defaults:
+  run:
+    working-directory: AutoResearchLab
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: AutoResearchLab/backend/requirements.txt
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r backend/requirements.txt
+      - run: python -m pytest backend/tests
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose --env-file .env.example config -q
+      - run: docker build --tag maars-api:ci --file backend/Dockerfile .
+      - run: >-
+          docker run --detach --rm --name maars-api-ci
+          --env MAARS_SESSION_SECRET=ci-only-not-a-production-secret
+          --env MAARS_DB_PATH=/tmp/maars.sqlite3
+          --env MAARS_LOGS_DIR=/tmp/logs
+          --env MAARS_SANDBOX_DIR=/tmp/sandbox
+          --publish 3001:3001 maars-api:ci
+      - run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent http://localhost:3001/healthz; then exit 0; fi
+            sleep 2
+          done
+          docker logs maars-api-ci
+          exit 1
+      - if: always()
+        run: docker stop maars-api-ci || true

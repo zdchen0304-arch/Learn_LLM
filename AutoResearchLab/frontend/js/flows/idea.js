@@ -1,0 +1,85 @@
+/**
+ * MAARS Idea 流程 - Refine（Idea Agent 文献收集）。
+ * 与 plan/task 统一：HTTP 仅触发，数据由 WebSocket idea-complete 回传。
+ */
+(function () {
+    'use strict';
+    const cfg = window.MAARS?.config;
+    const api = window.MAARS?.api;
+    if (!cfg || !api) return;
+    const toast = window.MAARS.toast;
+
+    const ideaInput = document.getElementById('ideaInput');
+    const refineIdeaBtn = document.getElementById('refineIdeaBtn');
+    const stopRefineBtn = document.getElementById('stopRefineBtn');
+
+    let isRefining = false;
+
+    function updateRefineState() {
+        if (isRefining) return;
+        const hasInput = (ideaInput?.value || '').trim().length > 0;
+        if (refineIdeaBtn) refineIdeaBtn.disabled = !hasInput;
+    }
+
+    function onIdeaComplete(e) {
+        const data = e.detail || {};
+        if (data.ideaId) cfg.setCurrentIdeaId(data.ideaId);
+        isRefining = false;
+        if (stopRefineBtn) stopRefineBtn.hidden = true;
+        updateRefineState();
+    }
+
+    function resetRefineUI(errorMsg) {
+        const isStoppedByUser = (errorMsg || '').includes('stopped by user');
+        if (errorMsg && !isStoppedByUser) {
+            console.error('Refine error:', errorMsg);
+            toast.error('Refine failed: ' + errorMsg);
+        }
+        isRefining = false;
+        if (stopRefineBtn) stopRefineBtn.hidden = true;
+        updateRefineState();
+    }
+
+    function stopRefine() {
+        resetRefineUI(); /* 立即恢复按钮，不等待后端 */
+        api.stopAgent('idea').catch(() => {});
+    }
+
+    async function runRefine() {
+        const idea = (ideaInput?.value || '').trim();
+        const socket = await window.MAARS.ws?.requireConnected?.();
+        if (!socket) return;
+        try {
+            isRefining = true;
+            refineIdeaBtn.disabled = true;
+            if (stopRefineBtn) stopRefineBtn.hidden = false;
+            document.dispatchEvent(new CustomEvent('maars:idea-start'));
+            document.dispatchEvent(new CustomEvent('maars:switch-view', { detail: { view: 'output' } }));
+            await api.refineIdea(idea, 10);
+        } catch (err) {
+            resetRefineUI(err.message || 'Unknown error');
+        }
+    }
+
+    document.addEventListener('maars:restore-complete', (e) => {
+        const ideaText = (e.detail?.ideaText || '').trim();
+        if (ideaText && ideaInput) ideaInput.value = ideaText;
+        updateRefineState();
+    });
+
+    document.addEventListener('maars:idea-error', (e) => {
+        resetRefineUI(e.detail?.error);
+    });
+
+    function init() {
+        /* 刷新页面时自动填充 example idea；若有 restore 则会被 maars:restore-complete 覆盖 */
+        api.loadExampleIdea();
+        refineIdeaBtn?.addEventListener('click', runRefine);
+        stopRefineBtn?.addEventListener('click', stopRefine);
+        document.addEventListener('maars:idea-complete', onIdeaComplete);
+        if (ideaInput) ideaInput.addEventListener('input', updateRefineState);
+        updateRefineState();
+    }
+
+    window.MAARS.idea = { init, updateRefineState, resetRefineUI };
+})();

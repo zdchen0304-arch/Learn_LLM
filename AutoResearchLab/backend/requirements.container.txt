@@ -1,0 +1,4 @@
+# CPU-only PyTorch prevents the API image from downloading NVIDIA CUDA runtime
+# packages merely because sentence-transformers is installed for optional RAG.
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0+cpu

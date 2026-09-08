@@ -1,0 +1,220 @@
+/**
+ * MAARS Thinking 区域 - AI 推理过程展示（plan/task/idea thinking 流）。
+ * 与 region-responsibilities 中 Thinking 区域对应。
+ */
+(function () {
+    'use strict';
+
+    const appendThinkingChunk = window.MAARS?.appendThinkingChunk;
+
+    const escapeHtml = window.MAARS?.utils?.escapeHtml || ((s) => (s == null ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
+    const truncateForDisplay = (s, maxLen) => {
+        if (s == null || typeof s !== 'string') return '';
+        const str = String(s).trim();
+        if (str.length <= maxLen) return str;
+        return str.slice(0, maxLen - 3) + '...';
+    };
+    function _isNoThinking(block) {
+        const raw = (block.content || '').trim();
+        if (!raw) return false;
+        try {
+            const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+            JSON.parse(m ? m[1].trim() : raw);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    const RENDER_THROTTLE_MS = 120;
+    const RENDER_THROTTLE_LARGE_MS = 250;
+    const LARGE_CONTENT_CHARS = 6000;
+
+    const PREFIX = 'thinking';
+    const CONTENT_EL = 'planAgentThinkingContent';
+    const AREA_EL = 'planAgentThinkingArea';
+    const BLOCK_CLASS = 'plan-agent-thinking-block';
+
+    const state = window.MAARS.state || {};
+    state[`${PREFIX}ThinkingBlocks`] = state[`${PREFIX}ThinkingBlocks`] || [];
+    state[`${PREFIX}ThinkingUserScrolled`] = state[`${PREFIX}ThinkingUserScrolled`] ?? false;
+    state[`${PREFIX}ThinkingBlockUserScrolled`] = state[`${PREFIX}ThinkingBlockUserScrolled`] || {};
+    state[`${PREFIX}LastUpdatedBlockKey`] = state[`${PREFIX}LastUpdatedBlockKey`] || '';
+    state[`${PREFIX}ScheduleCounter`] = state[`${PREFIX}ScheduleCounter`] ?? 0;
+    state[`${PREFIX}PlanCounter`] = state[`${PREFIX}PlanCounter`] ?? 0;
+    state[`${PREFIX}PlanStreamingKey`] = state[`${PREFIX}PlanStreamingKey`] ?? '';
+    state[`${PREFIX}IdeaCounter`] = state[`${PREFIX}IdeaCounter`] ?? 0;
+    state[`${PREFIX}IdeaStreamingKey`] = state[`${PREFIX}IdeaStreamingKey`] ?? '';
+    state[`${PREFIX}PaperCounter`] = state[`${PREFIX}PaperCounter`] ?? 0;
+    state[`${PREFIX}PaperStreamingKey`] = state[`${PREFIX}PaperStreamingKey`] ?? '';
+    window.MAARS.state = state;
+
+    let _renderScheduled = null;
+
+    /** 构建 thinking 块 header 文案，调度信息与有内容块共用同一格式 */
+    function _buildHeaderText(block) {
+        const si = block.scheduleInfo || {};
+        const agentLabel = (block.source || 'Thinking').charAt(0).toUpperCase() + (block.source || 'thinking').slice(1);
+        const op = si.operation || block.operation || null;
+        const tid = si.task_id ?? block.taskId;
+        const parts = [agentLabel];
+        if (op) parts.push(op);
+        if (tid != null) parts.push(String(tid));
+        if (si.turn != null) parts.push(`Turn ${si.turn}${si.max_turns != null ? `/${si.max_turns}` : ''}`);
+        if (si.tool_name) {
+            const argsDisplay = si.tool_args_preview || (si.tool_args ? truncateForDisplay(si.tool_args, 50) : null);
+            parts.push(si.tool_name + (argsDisplay ? `(${argsDisplay})` : ''));
+        }
+        return parts.join(' | ');
+    }
+
+    function renderThinking(skipHighlight) {
+        const el = document.getElementById(CONTENT_EL);
+        const area = document.getElementById(AREA_EL);
+        if (!el) return;
+        const blocks = state[`${PREFIX}ThinkingBlocks`];
+        let html = '';
+        let i = 0;
+        while (i < blocks.length) {
+            const block = blocks[i];
+            const isHeaderOnly = block.blockType === 'schedule' || _isNoThinking(block);
+            if (isHeaderOnly) {
+                let groupHtml = '';
+                while (i < blocks.length) {
+                    const b = blocks[i];
+                    if (b.blockType !== 'schedule' && !_isNoThinking(b)) break;
+                    const ht = _buildHeaderText(b);
+                    groupHtml += `<div class="${BLOCK_CLASS} ${BLOCK_CLASS}--header-only" data-block-key="${(b.key || '').replace(/"/g, '&quot;')}"><div class="${BLOCK_CLASS}-header">${escapeHtml(ht || '')}</div></div>`;
+                    i++;
+                }
+                html += `<div class="${BLOCK_CLASS}-schedule-group">${groupHtml}</div>`;
+                continue;
+            }
+            const headerText = _buildHeaderText(block);
+            const opAttr = block.operation ? ` data-operation="${escapeHtml(block.operation)}"` : '';
+            i++;
+            const raw = block.content || '';
+            let blockHtml = raw ? (typeof marked !== 'undefined' ? marked.parse(raw) : raw) : '';
+            if (blockHtml && typeof DOMPurify !== 'undefined') blockHtml = DOMPurify.sanitize(blockHtml);
+            html += `<div class="${BLOCK_CLASS}"${opAttr} data-block-key="${(block.key || '').replace(/"/g, '&quot;')}"><div class="${BLOCK_CLASS}-header">${escapeHtml(headerText || '')}</div><div class="${BLOCK_CLASS}-body">${blockHtml}</div></div>`;
+        }
+        const wasNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        const savedScrollTops = {};
+        el.querySelectorAll(`.${BLOCK_CLASS}`).forEach((blockEl) => {
+            const key = blockEl.getAttribute('data-block-key') || '';
+            const body = blockEl.querySelector(`.${BLOCK_CLASS}-body`);
+            if (body) savedScrollTops[key] = body.scrollTop;
+        });
+        try {
+            el.innerHTML = html || '';
+            if (!skipHighlight && typeof hljs !== 'undefined') {
+                const codeBlocks = el.querySelectorAll('pre code');
+                if (codeBlocks.length > 0 && codeBlocks.length <= 15) {
+                    codeBlocks.forEach((node) => { try { hljs.highlightElement(node); } catch (_) {} });
+                }
+            }
+        } catch (_) {
+            el.textContent = blocks.map((b) => b.content || '').join('\n\n');
+        }
+        if (!state[`${PREFIX}ThinkingUserScrolled`] && wasNearBottom) {
+            requestAnimationFrame(() => { requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; }); });
+        }
+        el.querySelectorAll(`.${BLOCK_CLASS}-schedule-group`).forEach((g) => {
+            g.scrollTop = g.scrollHeight;
+        });
+        state[`${PREFIX}ThinkingBlockUserScrolled`] = state[`${PREFIX}ThinkingBlockUserScrolled`] || {};
+        const lastKey = state[`${PREFIX}LastUpdatedBlockKey`] || '';
+        el.querySelectorAll(`.${BLOCK_CLASS}`).forEach((blockEl) => {
+            const key = blockEl.getAttribute('data-block-key') || '';
+            const body = blockEl.querySelector(`.${BLOCK_CLASS}-body`);
+            if (!body) return;
+            const shouldAutoScroll = key === lastKey && !state[`${PREFIX}ThinkingBlockUserScrolled`][key];
+            if (shouldAutoScroll) requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; });
+            else if (savedScrollTops[key] != null) body.scrollTop = savedScrollTops[key];
+            body.addEventListener('scroll', function onBlockScroll() {
+                const nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+                state[`${PREFIX}ThinkingBlockUserScrolled`][key] = !nearBottom;
+            }, { passive: true });
+        });
+        if (area && blocks.length) area.classList.add('has-content');
+    }
+
+    function scheduleRender() {
+        if (_renderScheduled) return;
+        const totalChars = state[`${PREFIX}ThinkingBlocks`].reduce((s, b) => s + (b.content || '').length, 0);
+        const throttle = totalChars > LARGE_CONTENT_CHARS ? RENDER_THROTTLE_LARGE_MS : RENDER_THROTTLE_MS;
+        _renderScheduled = setTimeout(() => {
+            _renderScheduled = null;
+            renderThinking(true);
+        }, throttle);
+    }
+
+    function clear(opts) {
+        state[`${PREFIX}ThinkingBlocks`] = [];
+        state[`${PREFIX}ThinkingUserScrolled`] = false;
+        state[`${PREFIX}ThinkingBlockUserScrolled`] = {};
+        state[`${PREFIX}LastUpdatedBlockKey`] = '';
+        state[`${PREFIX}ScheduleCounter`] = 0;
+        state[`${PREFIX}PlanCounter`] = 0;
+        state[`${PREFIX}PlanStreamingKey`] = '';
+        state[`${PREFIX}IdeaCounter`] = 0;
+        state[`${PREFIX}IdeaStreamingKey`] = '';
+        state[`${PREFIX}PaperCounter`] = 0;
+        state[`${PREFIX}PaperStreamingKey`] = '';
+        const el = document.getElementById(CONTENT_EL);
+        const area = document.getElementById(AREA_EL);
+        if (el) el.innerHTML = '';
+        if (area) area.classList.remove('has-content');
+    }
+
+    function appendChunk(chunk, taskId, operation, scheduleInfo, source) {
+        if (!appendThinkingChunk) return;
+        appendThinkingChunk(state, PREFIX, chunk, taskId, operation, scheduleInfo, source, scheduleRender);
+    }
+
+    function applyHighlight() {
+        const el = document.getElementById(CONTENT_EL);
+        if (!el || typeof hljs === 'undefined') return;
+        requestIdleCallback(() => {
+            el.querySelectorAll('pre code').forEach((node) => { try { hljs.highlightElement(node); } catch (_) {} });
+        }, { timeout: 500 });
+    }
+
+    (function initThinkingArea() {
+        const el = document.getElementById(CONTENT_EL);
+        if (!el) return;
+        el.addEventListener('scroll', () => {
+            const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            state[`${PREFIX}ThinkingUserScrolled`] = !nearBottom;
+        }, { passive: true });
+        const area = document.getElementById(AREA_EL);
+        if (!area) return;
+        const headerOnlyModifier = `${BLOCK_CLASS}--header-only`;
+        area.addEventListener('click', (e) => {
+            const block = e.target.closest(`.${BLOCK_CLASS}`);
+            if (!block || block.classList.contains(headerOnlyModifier)) return;
+            const allBlocks = area.querySelectorAll(`.${BLOCK_CLASS}:not(.${headerOnlyModifier})`);
+            const wasFocused = block.classList.contains('is-focused');
+            allBlocks.forEach((b) => b.classList.remove('is-focused'));
+            if (!wasFocused) block.classList.add('is-focused');
+        });
+    })();
+
+    (function initFlowStartListeners() {
+        const onFlowStart = () => clear();
+        document.addEventListener('maars:idea-start', onFlowStart);
+        document.addEventListener('maars:plan-start', onFlowStart);
+        document.addEventListener('maars:task-start', onFlowStart);
+        document.addEventListener('maars:paper-start', onFlowStart);
+        document.addEventListener('maars:restore-start', onFlowStart);
+    })();
+
+    (function initFlowCompleteListeners() {
+        const onFlowComplete = () => applyHighlight();
+        document.addEventListener('maars:idea-complete', onFlowComplete);
+        document.addEventListener('maars:plan-complete', onFlowComplete);
+        document.addEventListener('maars:task-complete', onFlowComplete);
+        document.addEventListener('maars:paper-complete', onFlowComplete);
+    })();
+
+    window.MAARS.thinking = { clear, appendChunk, applyHighlight };
+})();

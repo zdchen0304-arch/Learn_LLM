@@ -1,0 +1,218 @@
+/**
+ * Research execute attempt/task card detail styling.
+ */
+
+.research-execute-task-card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: var(--bg-area-secondary);
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.research-execute-task-card--doing {
+    border-color: #f59e0b;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.04) 0%, rgba(245, 158, 11, 0.02) 100%);
+}
+
+.research-execute-task-card--done {
+    border-color: #22c55e;
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.04) 0%, rgba(34, 197, 94, 0.02) 100%);
+}
+
+.research-execute-task-card--failed {
+    border-color: #ef4444;
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.research-execute-task-card--pending {
+    border-color: #94a3b8;
+}
+
+.research-execute-task-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.research-execute-task-header:hover {
+    background: var(--bg-area-tertiary);
+}
+
+.research-execute-task-toggle {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    padding: 0;
+}
+
+.research-execute-task-toggle:hover {
+    color: var(--text-secondary);
+}
+
+.research-execute-task-title {
+    font-weight: 600;
+    color: var(--text-color);
+    word-break: break-word;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.research-execute-task-operation {
+    font-size: 11px;
+    color: var(--text-muted);
+    word-break: break-word;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.research-execute-task-status-label {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--bg-area-tertiary);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.research-execute-task-details {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border-color);
+    display: none;
+    width: 100%;
+    min-width: 0;
+}
+
+.research-execute-task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.research-execute-attempt {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+}
+
+.research-execute-attempt--doing {
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.research-execute-attempt--done {
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+.research-execute-attempt--failed {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.research-execute-attempt-header {
+    display: grid;
+    grid-template-columns: 24px minmax(0, auto) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.research-execute-attempt-toggle {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.2s ease;
+}
+
+.research-execute-attempt-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.research-execute-attempt-status-label {
+    justify-self: start;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg-area-secondary);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.research-execute-attempt-summary {
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.research-execute-attempt-body {
+    display: block;
+    padding: 0 10px 10px;
+}
+
+.research-execute-task-content .research-execute-message {
+    max-width: 100%;
+    align-self: flex-start;
+    margin: 0;
+    font-size: 12px;
+    min-width: 0;
+}
+
+.research-execute-task-content .research-execute-message-bubble {
+    padding: 8px 10px;
+    font-size: 12px;
+    max-width: 100%;
+    word-break: break-word;
+}
+
+@media (max-width: 900px) {
+    .research-execute-attempt-header {
+        grid-template-columns: 24px minmax(0, 1fr);
+    }
+
+    .research-execute-attempt-status-label,
+    .research-execute-attempt-summary {
+        grid-column: 2;
+    }
+
+    .research-runtime-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

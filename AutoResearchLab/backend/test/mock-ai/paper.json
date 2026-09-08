@@ -1,0 +1,6 @@
+{
+  "_default": {
+    "content": "# Mock Paper Draft\n\n## Abstract\n\nSimulated research paper (Mock AI mode).\n\n## Introduction\n\nThis is a placeholder paper draft generated from the experiment plan and task outputs.\n\n## Methodology\n\nBased on the plan steps.\n\n## Results\n\nSynthesized from task outputs.\n\n## Conclusion\n\nReview and refine based on full task outputs.",
+    "reasoning": "Synthesizing plan and task outputs into a structured paper draft."
+  }
+}

@@ -1,0 +1,102 @@
+/**
+ * Research workbench mode toggles and runtime badges.
+ */
+
+#researchDetailHost.research-workbench--plan .tree-view-tabs {
+    display: none;
+}
+
+#researchDetailHost.research-workbench--plan #planAgentThinkingArea {
+    display: none;
+}
+
+#researchDetailHost.research-workbench--plan .plan-agent-tree-area {
+    flex: 1 1 auto;
+    width: 100%;
+}
+
+#researchDetailHost.research-workbench--plan {
+    gap: 0;
+}
+
+.research-execution-runtime {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px 0;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.research-execution-runtime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-area-secondary);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.research-execution-runtime-badge.is-ok {
+    border-color: rgba(28, 177, 88, 0.35);
+    color: #1cb158;
+}
+
+.research-execution-runtime-badge.is-warn {
+    border-color: rgba(224, 167, 0, 0.35);
+    color: #d39d00;
+}
+
+.research-execution-runtime-badge.is-error {
+    border-color: rgba(215, 58, 73, 0.35);
+    color: #d73a49;
+}
+
+.research-execution-runtime-meta {
+    color: var(--text-muted);
+    font-size: 11px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#researchDetailHost.research-workbench--plan .view-execution,
+#researchDetailHost.research-workbench--plan .view-output {
+    display: none;
+}
+
+#researchDetailHost.research-workbench--execute #planAgentThinkingArea {
+    display: flex;
+    flex: 0 0 calc(100% - (var(--execute-left-ratio) * 1%) - 8px);
+    width: calc(100% - (var(--execute-left-ratio) * 1%) - 8px);
+}
+
+#researchDetailHost.research-workbench--execute .plan-agent-tree-area {
+    flex: 0 0 calc(var(--execute-left-ratio) * 1%);
+    width: calc(var(--execute-left-ratio) * 1%);
+}
+
+#researchDetailHost.research-workbench--execute .tree-view-tabs {
+    display: none;
+}
+
+#researchDetailHost.research-workbench--execute .view-decomposition,
+#researchDetailHost.research-workbench--execute .view-output {
+    display: none;
+}
+
+#researchDetailHost.research-workbench--execute .view-execution {
+    display: flex;
+}
+
+#researchDetailHost.research-workbench--execute #planAgentThinkingContent,
+#researchDetailHost.research-workbench--execute #planAgentThinkingPlaceholder {
+    display: none;
+}

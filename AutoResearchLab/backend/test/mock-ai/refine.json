@@ -1,0 +1,8 @@
+{
+  "_default": {
+    "content": {
+      "keywords": ["research", "survey", "machine learning", "deep learning"]
+    },
+    "reasoning": "Extracting keywords from the user's idea for arXiv search. Identifying technical terms and domain nouns."
+  }
+}

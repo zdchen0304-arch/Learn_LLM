@@ -1,0 +1,6 @@
+{
+  "_default": {
+    "content": "## Description\n\nThis study aims to develop a comprehensive survey and framework for machine learning and deep learning research, synthesizing recent advances in the field and identifying key trends, open challenges, and future directions.\n\n## Research Questions\n\n- RQ1: What are the main categories and taxonomies of machine learning and deep learning methods?\n- RQ2: What are the current limitations and gaps in existing survey literature?\n- RQ3: What methodological approaches are most effective for comparative analysis?\n\n## Research Gap\n\nExisting surveys often focus on narrow subdomains; a unified framework that bridges traditional ML and modern deep learning is lacking.\n\n## Method Approach\n\nConduct systematic literature review, categorize papers by methodology and application domain, then synthesize findings into a structured framework.",
+    "reasoning": "Analyzing the user's idea and retrieved papers to formulate a concrete, executable research description. Identifying research questions and gaps from the literature context."
+  }
+}

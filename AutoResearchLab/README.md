@@ -89,6 +89,25 @@ Each stage supports **Run** (start fresh), **Resume** (continue from stopped/fai
 
 The Thinking panel shows reasoning traces; the Output panel shows final artifacts (literature, task outputs, paper).
 
+## Research Control Tower
+
+The Research detail page includes a read-only **Research Control Tower**. It
+makes the supervisory architecture visible instead of presenting all agents and
+artifacts as one ambiguous tree:
+
+- **Agent organization** — Research Director → stage lead → specialised workers.
+- **Quality gates** — explicit conditions that permit the next delegation.
+- **Task contracts** — owner, goal, dependencies, expected outputs, and status.
+- **Evidence lineage** — literature, task specifications, validated outputs,
+  paper draft, and paper review are shown as provenance artifacts, separate
+  from the execution DAG.
+
+The Paper stage automatically runs the bundled `paper-quality-review` Skill
+after drafting. It persists a structured review report; blocking findings turn
+the paper gate to `needs_revision`, rather than allowing a draft to look
+silently complete. A saved draft can be reviewed again through
+`POST /api/paper/review`.
+
 ---
 
 ## Four Agents

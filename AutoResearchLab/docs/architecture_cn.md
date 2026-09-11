@@ -5,8 +5,45 @@
 MAARS 是一个四阶段自动化科研管道：从模糊想法到论文草稿，由四个 AI Agent 接力完成。
 
 ```
-用户想法 -> [Idea Agent] -> [Plan Agent] -> [Task Agent] -> [Paper Agent] -> 论文草稿
+                          Research Director（控制面）
+                           /        |         |        \\
+用户想法 -> Refine -> Plan -> Execute -> Paper -> Quality Review
+             |          |         |         |          |
+           文献证据    任务 DAG  验证产物   草稿      修订决策
 ```
+
+四阶段流水线仍然是数据面；`ResearchDirector` 刻意保持只读，不直接调用工具、也
+不隐藏重试。它把持久化状态转换为可检查的委派合同、质量门、组织角色和证据谱系，
+让用户能清楚知道“为什么下一阶段可以或不可以启动”。
+
+## Research Control Tower
+
+详情页将以下四类信息分开展示，避免把所有概念塞进一棵树：
+
+| 视图 | 回答的问题 | 数据来源 |
+| --- | --- | --- |
+| Agent Organization | 谁向谁汇报、谁负责委派？ | Director 静态角色图 |
+| Task Contracts | 每个 Lead/Worker 承诺交付什么？ | Director 快照 + Plan/Execution 状态 |
+| Execution DAG | 哪些任务可并行、依赖顺序是什么？ | Plan/Execution 图 |
+| Evidence Lineage | 草稿和审查分别依赖哪些具体产物？ | SQLite 中的文献、输出、论文、审查报告 |
+
+`GET /api/research/{researchId}/control-tower` 返回 Director 快照，含
+`qualityGates`、`taskContracts`、`agentOrganization`、`evidenceTrail`；前端将其与
+已有的任务 DAG Workbench 分开渲染。
+
+| 阶段 | Lead | 质量门 |
+| --- | --- | --- |
+| Refine | Literature Lead | 已有关键词与 refined research idea |
+| Plan | Planning Lead | 已有可执行研究计划 |
+| Execute | Execution Lead | 每个可执行任务均有持久化输出 |
+| Paper | Writing Lead | 已有草稿，且 Paper Quality Review 无 blocker |
+
+### Paper Quality Review Skill
+
+`paper_agent/skills/paper-quality-review/SKILL.md` 是草稿生成后的专用 Skill。它只
+接收草稿、计划和 artifact digest，返回结构化 JSON 报告，而不是悄悄改写论文。报告
+覆盖 claim、方法、引用、可复现性、问题清单和修订计划；结果持久化到 `paper_reviews`，
+通过 `paper-review-complete` 事件通知，也可用 `POST /api/paper/review` 重新执行。
 
 ## 后端
 
@@ -50,6 +87,11 @@ task_agent/                     Task Agent — 并行执行 + 验证
 
 paper_agent/                    Paper Agent — 论文草稿生成
   runner.py                     单文件（Mock / LLM 单轮 / Agent MVP 管道）
+  review.py                     由 Skill 驱动的论文质量审查运行时
+  skills/paper-quality-review/  审查说明与 JSON 报告 schema
+
+orchestrator/                   Research Control Tower 控制面
+  director.py                   角色图、任务合同、质量门、证据谱系快照
 
 validate_agent/                 Step-B 合同审查（Task Agent 子组件）
   executor.py                   验证标准调整决策

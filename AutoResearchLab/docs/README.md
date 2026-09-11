@@ -5,6 +5,7 @@
 | Document | Description |
 | --- | --- |
 | [Architecture](architecture.md) | System architecture overview ([中文](architecture_cn.md)) |
+| [Control Tower Demo](CONTROL_TOWER_DEMO.md) | Interview narrative, architecture layers, and acceptance checks |
 | [Development Guide](DEVELOPMENT_GUIDE.md) | Architecture, Research API, Skill system |
 | [Frontend Scripts](FRONTEND_SCRIPTS.md) | Page mapping, script load order, module dependencies |
 | [Release Note Standard](RELEASE_NOTE_STANDARD.md) | Release note writing guidelines |

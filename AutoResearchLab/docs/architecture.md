@@ -5,8 +5,51 @@
 MAARS is a four-stage automated research pipeline: from a vague idea to a full paper draft, powered by four AI Agents working in relay.
 
 ```
-User idea -> [Idea Agent] -> [Plan Agent] -> [Task Agent] -> [Paper Agent] -> Paper draft
+                        Research Director (control plane)
+                         /        |         |        \\
+User idea -> Refine -> Plan -> Execute -> Paper -> Quality review
+              |         |          |          |          |
+           evidence   task DAG  validated   draft    revision decision
 ```
+
+The stage pipeline remains the data plane. `ResearchDirector` is deliberately
+read-only: it does not run tools or hide retries. It translates persisted state
+into explicit delegation contracts, quality gates, organisation roles, and an
+evidence lineage so an interviewer can inspect why the next stage may run.
+
+## Research Control Tower
+
+The detail page has four views which must not be conflated:
+
+| View | Question it answers | Source of truth |
+| --- | --- | --- |
+| Agent organization | Who reports to and delegates to whom? | Static Director role map |
+| Task contracts | What does each lead/worker promise to deliver? | Director snapshot + plan/execution state |
+| Execution DAG | What can run in parallel and in what order? | Plan/execution graph |
+| Evidence lineage | Which concrete artifacts support the draft and review? | SQLite papers, outputs, literature, reviews |
+
+`GET /api/research/{researchId}/control-tower` returns the Director snapshot.
+It contains `qualityGates`, `taskContracts`, `agentOrganization`, and
+`evidenceTrail`; the frontend renders them separately from the existing task
+DAG workbench.
+
+The four top-level contracts are:
+
+| Stage | Lead | Gate |
+| --- | --- | --- |
+| Refine | Literature Lead | Keywords and a refined research idea exist |
+| Plan | Planning Lead | An executable research plan exists |
+| Execute | Execution Lead | Every executable task has a persisted output |
+| Paper | Writing Lead | Draft exists and Paper Quality Review has no blockers |
+
+### Paper Quality Review Skill
+
+`paper_agent/skills/paper-quality-review/SKILL.md` is a focused post-drafting
+skill. It receives only the draft, plan, and artifact digest; it returns a
+structured JSON report instead of silently editing the manuscript. The report
+audits claims, methods, citations, reproducibility, findings, and a revision
+plan. It is persisted in `paper_reviews`, emitted as `paper-review-complete`,
+and can be refreshed with `POST /api/paper/review`.
 
 ## Backend
 
@@ -50,6 +93,11 @@ task_agent/                     Task Agent -- parallel execution + validation
 
 paper_agent/                    Paper Agent -- paper draft generation
   runner.py                     Single file (Mock / LLM single-pass / Agent MVP pipeline)
+  review.py                     Skill-backed paper quality review runtime
+  skills/paper-quality-review/  Review instructions and JSON report schema
+
+orchestrator/                   Research Control Tower control plane
+  director.py                   Role map, contracts, gates, evidence lineage snapshot
 
 validate_agent/                 Step-B contract review (Task Agent sub-component)
   executor.py                   Validation criteria adjustment decisions

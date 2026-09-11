@@ -105,6 +105,7 @@ async def clear_all_data() -> list[str]:
         "validation_reports",
         "ai_responses",
         "papers",
+        "paper_reviews",
         "task_attempt_memories",
         "researches",
     ]
@@ -140,6 +141,29 @@ async def get_paper(idea_id: str, plan_id: str) -> dict | None:
         return {"format": row["format"], "content": row["content"]}
 
 
+async def save_paper_review(idea_id: str, plan_id: str, report: dict) -> None:
+    async with base._db() as db:
+        await db.execute(
+            "INSERT INTO paper_reviews(idea_id, plan_id, data, updated_at) VALUES(?,?,?,?) "
+            "ON CONFLICT(idea_id, plan_id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
+            (idea_id, plan_id, base._json_dumps(report or {}), base._now()),
+        )
+        await db.commit()
+
+
+async def get_paper_review(idea_id: str, plan_id: str) -> dict | None:
+    async with base._db() as db:
+        async with db.execute(
+            "SELECT data, updated_at FROM paper_reviews WHERE idea_id=? AND plan_id=?",
+            (idea_id, plan_id),
+        ) as cur:
+            row = await cur.fetchone()
+        if not row:
+            return None
+        report = base._json_loads(row["data"])
+        return {"report": report or {}, "updatedAt": row["updated_at"]}
+
+
 async def clear_research_stage_data_for_retry(idea_id: str | None, plan_id: str | None, stage: str) -> dict:
     """Clear data for stage retry semantics: clear current stage outputs and all downstream outputs."""
     idea = str(idea_id or "").strip()
@@ -167,7 +191,7 @@ async def clear_research_stage_data_for_retry(idea_id: str | None, plan_id: str 
         if s == "refine":
             await db.execute("DELETE FROM ideas WHERE idea_id = ?", (idea,))
             cleared.append("ideas")
-            for table in ("plans", "executions", "task_artifacts", "validation_reports", "ai_responses", "papers"):
+            for table in ("plans", "executions", "task_artifacts", "validation_reports", "ai_responses", "papers", "paper_reviews"):
                 await db.execute(f"DELETE FROM {table} WHERE idea_id = ?", (idea,))
                 cleared.append(table)
 
@@ -175,32 +199,34 @@ async def clear_research_stage_data_for_retry(idea_id: str | None, plan_id: str 
             if plan:
                 await db.execute("DELETE FROM plans WHERE idea_id = ? AND plan_id = ?", (idea, plan))
                 cleared.append("plans")
-                for table in ("executions", "task_artifacts", "validation_reports", "ai_responses", "papers"):
+                for table in ("executions", "task_artifacts", "validation_reports", "ai_responses", "papers", "paper_reviews"):
                     await db.execute(f"DELETE FROM {table} WHERE idea_id = ? AND plan_id = ?", (idea, plan))
                     cleared.append(table)
             else:
                 await db.execute("DELETE FROM plans WHERE idea_id = ?", (idea,))
                 cleared.append("plans")
-                for table in ("executions", "task_artifacts", "validation_reports", "ai_responses", "papers"):
+                for table in ("executions", "task_artifacts", "validation_reports", "ai_responses", "papers", "paper_reviews"):
                     await db.execute(f"DELETE FROM {table} WHERE idea_id = ?", (idea,))
                     cleared.append(table)
 
         elif s == "execute":
             if plan:
-                for table in ("executions", "task_artifacts", "validation_reports", "papers"):
+                for table in ("executions", "task_artifacts", "validation_reports", "papers", "paper_reviews"):
                     await db.execute(f"DELETE FROM {table} WHERE idea_id = ? AND plan_id = ?", (idea, plan))
                     cleared.append(table)
             else:
-                for table in ("executions", "task_artifacts", "validation_reports", "papers"):
+                for table in ("executions", "task_artifacts", "validation_reports", "papers", "paper_reviews"):
                     await db.execute(f"DELETE FROM {table} WHERE idea_id = ?", (idea,))
                     cleared.append(table)
 
         elif s == "paper":
             if plan:
                 await db.execute("DELETE FROM papers WHERE idea_id = ? AND plan_id = ?", (idea, plan))
+                await db.execute("DELETE FROM paper_reviews WHERE idea_id = ? AND plan_id = ?", (idea, plan))
             else:
                 await db.execute("DELETE FROM papers WHERE idea_id = ?", (idea,))
-            cleared.append("papers")
+                await db.execute("DELETE FROM paper_reviews WHERE idea_id = ?", (idea,))
+            cleared.extend(("papers", "paper_reviews"))
 
         await db.commit()
 
@@ -230,6 +256,7 @@ async def delete_research_cascade(research_id: str) -> dict:
                 await db.execute("DELETE FROM validation_reports WHERE idea_id = ? AND plan_id = ?", (idea_id, plan_id))
                 await db.execute("DELETE FROM ai_responses WHERE idea_id = ? AND plan_id = ?", (idea_id, plan_id))
                 await db.execute("DELETE FROM papers WHERE idea_id = ? AND plan_id = ?", (idea_id, plan_id))
+                await db.execute("DELETE FROM paper_reviews WHERE idea_id = ? AND plan_id = ?", (idea_id, plan_id))
             else:
                 await db.execute("DELETE FROM plans WHERE idea_id = ?", (idea_id,))
                 await db.execute("DELETE FROM executions WHERE idea_id = ?", (idea_id,))
@@ -237,6 +264,7 @@ async def delete_research_cascade(research_id: str) -> dict:
                 await db.execute("DELETE FROM validation_reports WHERE idea_id = ?", (idea_id,))
                 await db.execute("DELETE FROM ai_responses WHERE idea_id = ?", (idea_id,))
                 await db.execute("DELETE FROM papers WHERE idea_id = ?", (idea_id,))
+                await db.execute("DELETE FROM paper_reviews WHERE idea_id = ?", (idea_id,))
 
         await db.commit()
 

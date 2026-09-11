@@ -6,12 +6,20 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from db import get_effective_config, get_plan, list_plan_outputs, save_paper
+from db import (
+    get_effective_config,
+    get_paper,
+    get_plan,
+    list_plan_outputs,
+    save_paper,
+    save_paper_review,
+)
 from paper_agent import run_paper_agent
+from paper_agent.review import review_paper
 from shared.realtime import build_thinking_emitter
 
 from .. import state as api_state
-from ..schemas import PaperRunRequest
+from ..schemas import PaperReviewRequest, PaperRunRequest
 
 router = APIRouter()
 
@@ -50,11 +58,22 @@ async def _run_paper_inner(session_id: str, state, idea_id: str, plan_id: str, f
             on_thinking=on_thinking,
             abort_event=abort_event,
         )
+        if str(content or "").startswith("Error generating paper:"):
+            raise RuntimeError(str(content))
 
         try:
             await save_paper(idea_id, plan_id, format_type=(format_type or "markdown"), content=content)
         except Exception as e:
             logger.warning("Failed to persist paper: %s", e)
+
+        review = await review_paper(
+            content=content,
+            plan=plan,
+            outputs=outputs,
+            api_config=config,
+            abort_event=abort_event,
+        )
+        await save_paper_review(idea_id, plan_id, review)
 
         await api_state.emit(session_id, "paper-complete", {
             "ideaId": idea_id,
@@ -62,6 +81,12 @@ async def _run_paper_inner(session_id: str, state, idea_id: str, plan_id: str, f
             "content": content,
             "format": format_type or "markdown",
         })
+        await api_state.emit_safe(
+            session_id,
+            "paper-review-complete",
+            {"ideaId": idea_id, "planId": plan_id, "review": review},
+            warning_label="paper-review-complete emit",
+        )
     except asyncio.CancelledError:
         await api_state.emit_safe(
             session_id,
@@ -110,6 +135,34 @@ async def run_paper_route(body: PaperRunRequest, request: Request):
     )
 
     return {"success": True, "ideaId": idea_id, "planId": plan_id, "sessionId": session_id}
+
+
+@router.post("/review")
+async def review_paper_route(body: PaperReviewRequest, request: Request):
+    """Run or refresh the paper-quality-review Skill for a saved paper draft."""
+    session_id, _ = await api_state.require_session(request)
+    idea_id = (body.idea_id or "").strip()
+    plan_id = (body.plan_id or "").strip()
+    paper = await get_paper(idea_id, plan_id) if idea_id and plan_id else None
+    if not paper:
+        return JSONResponse(status_code=400, content={"error": "Paper not found. Generate a paper first."})
+    plan = await get_plan(idea_id, plan_id)
+    outputs = await list_plan_outputs(idea_id, plan_id)
+    config = await get_effective_config()
+    review = await review_paper(
+        content=paper.get("content") or "",
+        plan=plan or {},
+        outputs=outputs,
+        api_config=config,
+    )
+    await save_paper_review(idea_id, plan_id, review)
+    await api_state.emit_safe(
+        session_id,
+        "paper-review-complete",
+        {"ideaId": idea_id, "planId": plan_id, "review": review},
+        warning_label="paper-review-complete emit",
+    )
+    return {"success": True, "ideaId": idea_id, "planId": plan_id, "review": review}
 
 
 @router.post("/stop")

@@ -19,9 +19,11 @@ from .sqlite_backend_research import (
     clear_research_stage_data_for_retry as _sb_clear_research_stage_data_for_retry,
     delete_research_cascade as _sb_delete_research_cascade,
     get_paper as _sb_get_paper,
+    get_paper_review as _sb_get_paper_review,
     get_research as _sb_get_research,
     list_researches as _sb_list_researches,
     save_paper as _sb_save_paper,
+    save_paper_review as _sb_save_paper_review,
     update_research_stage as _sb_update_research_stage,
 )
 from .sqlite_backend_memory import (
@@ -72,6 +74,18 @@ async def get_paper(idea_id: str, plan_id: str) -> dict | None:
     _validate_idea_id(idea_id)
     _validate_plan_id(plan_id)
     return await _sb_get_paper(idea_id, plan_id)
+
+
+async def save_paper_review(idea_id: str, plan_id: str, report: dict) -> None:
+    _validate_idea_id(idea_id)
+    _validate_plan_id(plan_id)
+    return await _sb_save_paper_review(idea_id, plan_id, report)
+
+
+async def get_paper_review(idea_id: str, plan_id: str) -> dict | None:
+    _validate_idea_id(idea_id)
+    _validate_plan_id(plan_id)
+    return await _sb_get_paper_review(idea_id, plan_id)
 
 
 async def clear_research_stage_data_for_retry(idea_id: str | None, plan_id: str | None, stage: str) -> dict:

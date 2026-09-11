@@ -70,6 +70,9 @@
         onJsonEvent('paper-complete', (data) => {
             document.dispatchEvent(new CustomEvent('maars:paper-complete', { detail: data || {} }));
         });
+        onJsonEvent('paper-review-complete', (data) => {
+            document.dispatchEvent(new CustomEvent('maars:paper-review-complete', { detail: data || {} }));
+        });
         onJsonEvent('paper-error', (data) => {
             document.dispatchEvent(new CustomEvent('maars:paper-error', { detail: { error: data?.error } }));
         });

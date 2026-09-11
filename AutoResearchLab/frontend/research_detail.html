@@ -278,6 +278,40 @@
                     </div>
                 </div>
 
+                <section class="control-tower" id="researchControlTower" aria-label="Research Control Tower" hidden>
+                    <div class="control-tower-header">
+                        <div>
+                            <p class="control-tower-eyebrow">Control plane</p>
+                            <h3>Research Control Tower</h3>
+                        </div>
+                        <span class="control-tower-status" id="controlTowerStageStatus">idle</span>
+                    </div>
+                    <p class="control-tower-decision" id="controlTowerDecision">The Research Director is preparing delegation contracts.</p>
+                    <div class="control-tower-summary" id="controlTowerSummary" aria-label="Research artifact summary"></div>
+                    <div class="control-tower-grid">
+                        <section class="control-tower-card" aria-labelledby="controlTowerOrganizationTitle">
+                            <h4 id="controlTowerOrganizationTitle">Agent organization</h4>
+                            <p class="control-tower-caption">Who delegates to whom</p>
+                            <div id="controlTowerOrganization" class="control-tower-organization"></div>
+                        </section>
+                        <section class="control-tower-card" aria-labelledby="controlTowerGatesTitle">
+                            <h4 id="controlTowerGatesTitle">Quality gates</h4>
+                            <p class="control-tower-caption">What must be true before the next stage</p>
+                            <div id="controlTowerGates" class="control-tower-gates"></div>
+                        </section>
+                        <section class="control-tower-card control-tower-card--wide" aria-labelledby="controlTowerContractsTitle">
+                            <h4 id="controlTowerContractsTitle">Task contracts</h4>
+                            <p class="control-tower-caption">Commitments are separate from the execution DAG and evidence artifacts below</p>
+                            <div id="controlTowerContracts" class="control-tower-contracts"></div>
+                        </section>
+                        <section class="control-tower-card control-tower-card--wide" aria-labelledby="controlTowerEvidenceTitle">
+                            <h4 id="controlTowerEvidenceTitle">Evidence lineage</h4>
+                            <p class="control-tower-caption">Which artifact was produced by which role, and what it depends on</p>
+                            <div id="controlTowerEvidence" class="control-tower-evidence"></div>
+                        </section>
+                    </div>
+                </section>
+
                 <div class="research-stage-panel" id="researchPanelRefine" data-stage-panel="refine" aria-label="Refine stage">
                     <div class="research-stage-panel-inner">
                         <div class="research-stage-card">
@@ -390,6 +424,7 @@
     <script src="js/flows/research-core-utils.js"></script>
     <script src="js/flows/research-execute-render.js"></script>
     <script src="js/flows/research-execute-state.js"></script>
+    <script src="js/flows/control-tower.js"></script>
     <script src="js/flows/research-loader.js"></script>
     <script src="js/flows/research-event-bridges.js"></script>
     <script src="js/flows/research-stage-ui.js"></script>

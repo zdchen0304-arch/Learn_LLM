@@ -145,6 +145,17 @@ async def init_sqlite() -> None:
             )
             await db.execute(
                 """
+                CREATE TABLE IF NOT EXISTS paper_reviews (
+                    idea_id TEXT NOT NULL,
+                    plan_id TEXT NOT NULL,
+                    data TEXT NOT NULL,
+                    updated_at REAL NOT NULL,
+                    PRIMARY KEY (idea_id, plan_id)
+                )
+                """
+            )
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS researches (
                     research_id TEXT PRIMARY KEY,
                     prompt TEXT NOT NULL,

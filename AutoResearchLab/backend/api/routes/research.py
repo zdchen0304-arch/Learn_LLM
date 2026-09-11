@@ -16,11 +16,13 @@ from db import (
     get_execution,
     get_idea,
     get_paper,
+    get_paper_review,
     get_plan,
     get_research,
     list_plan_outputs,
     list_researches,
 )
+from orchestrator import ResearchDirector
 
 from .. import state as api_state
 from ..schemas import ResearchCreateRequest
@@ -29,6 +31,7 @@ from .research_pipeline import _cancel_research_running_tasks
 from .research_run_routes import router as research_run_router
 
 router = APIRouter()
+_director = ResearchDirector()
 
 
 def _make_research_id() -> str:
@@ -61,6 +64,33 @@ async def create_research_route(body: ResearchCreateRequest, request: Request):
     return {"researchId": research_id}
 
 
+@router.get("/{research_id}/control-tower")
+async def get_control_tower_route(research_id: str, request: Request):
+    """Return the Director's read-only view of delegation contracts and gates."""
+    await api_state.require_session(request)
+    research = await get_research(research_id)
+    if not research:
+        return JSONResponse(status_code=404, content={"error": "Research not found"})
+
+    idea_id = research.get("currentIdeaId")
+    plan_id = research.get("currentPlanId")
+    idea = await get_idea(idea_id) if idea_id else None
+    plan = await get_plan(idea_id, plan_id) if (idea_id and plan_id) else None
+    execution = await get_execution(idea_id, plan_id) if (idea_id and plan_id) else None
+    outputs = await list_plan_outputs(idea_id, plan_id) if (idea_id and plan_id) else {}
+    paper = await get_paper(idea_id, plan_id) if (idea_id and plan_id) else None
+    paper_review = await get_paper_review(idea_id, plan_id) if (idea_id and plan_id) else None
+    return _director.snapshot(
+        research=research,
+        idea=idea,
+        plan=plan,
+        execution=execution,
+        outputs=outputs,
+        paper=paper,
+        paper_review=paper_review,
+    )
+
+
 @router.get("/{research_id}")
 async def get_research_route(research_id: str, request: Request):
     await api_state.require_session(request)
@@ -75,6 +105,7 @@ async def get_research_route(research_id: str, request: Request):
     execution = await get_execution(idea_id, plan_id) if (idea_id and plan_id) else None
     outputs = await list_plan_outputs(idea_id, plan_id) if (idea_id and plan_id) else {}
     paper = await get_paper(idea_id, plan_id) if (idea_id and plan_id) else None
+    paper_review = await get_paper_review(idea_id, plan_id) if (idea_id and plan_id) else None
     step_events = _load_latest_step_events(idea_id, plan_id) if (idea_id and plan_id) else {"runId": "", "events": []}
 
     return {
@@ -84,6 +115,7 @@ async def get_research_route(research_id: str, request: Request):
         "execution": execution,
         "outputs": outputs,
         "paper": paper,
+        "paperReview": paper_review,
         "stepEvents": step_events,
     }
 

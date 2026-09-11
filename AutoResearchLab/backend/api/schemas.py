@@ -61,6 +61,13 @@ class PaperRunRequest(BaseModel):
     format: Optional[str] = Field(default="markdown", description="Output format: markdown or latex")
 
 
+class PaperReviewRequest(BaseModel):
+    """Run the paper-quality-review Skill against a persisted paper draft."""
+    model_config = ConfigDict(populate_by_name=True)
+    idea_id: str = Field(..., alias="ideaId", description="Idea ID")
+    plan_id: str = Field(..., alias="planId", description="Plan ID")
+
+
 class ResearchCreateRequest(BaseModel):
     """Create a research (Gemini-like home input)."""
     model_config = ConfigDict(populate_by_name=True)

@@ -47,6 +47,20 @@ python -m uvicorn main:asgi_app --host 0.0.0.0 --port 3001 --loop asyncio --http
 
 Thinking 区域展示推理过程，Output 区域展示最终产出（文献、任务 artifact、论文）。
 
+## Research Control Tower
+
+Research 详情页新增只读的 **Research Control Tower（研究控制塔）**。它不再把
+主从关系、任务依赖和产物证据混在同一棵树中，而是分别展示：
+
+- **Agent Organization**：Research Director → 阶段 Lead → 专项 Worker 的委派关系；
+- **Quality Gates**：进入下一阶段前必须满足的质量条件；
+- **Task Contracts**：负责人、目标、依赖、预期产物和当前状态；
+- **Evidence Lineage**：文献、任务规格、已验证输出、论文草稿、审查报告的来源链。
+
+Paper 阶段在生成草稿后会自动执行内置 `paper-quality-review` Skill 并持久化
+结构化报告。若报告包含 blocker，论文质量门会显示 `needs_revision`，不会把“已
+生成草稿”误展示为“可以发布”。已保存草稿也可通过 `POST /api/paper/review` 重新审查。
+
 ---
 
 ## 四 Agent
@@ -82,6 +96,7 @@ maars/
 │   ├── plan_agent/    # Plan Agent
 │   ├── task_agent/    # Task Agent（ExecutionRunner + 5 个函数模块 + 依赖注入）
 │   ├── paper_agent/   # Paper Agent
+│   ├── orchestrator/  # Research Director 控制面、质量门与任务契约
 │   ├── validate_agent/# Step-B 合同审查（Task Agent 子组件）
 │   ├── shared/        # LLM 客户端、常量、反思、工具函数
 │   ├── visualization/ # 执行图布局计算
@@ -101,6 +116,7 @@ maars/
 | 文档 | 说明 |
 | --- | --- |
 | [架构文档](docs/architecture_cn.md) | 系统架构总览（[English](docs/architecture.md)） |
+| [Control Tower 演示说明](docs/CONTROL_TOWER_DEMO.md) | 面试演示叙事、架构分层和验收方式 |
 | [docs/README.md](docs/README.md) | 文档索引 |
 | [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md) | 开发指南（架构、Research API、Skill 扩充与维护） |
 | [docs/workflow/](docs/workflow/) | 工作流说明（用户流程、Research 流程、四 Agent、实时事件） |

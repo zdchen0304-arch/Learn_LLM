@@ -23,6 +23,9 @@
 
         if (ctx.breadcrumbEl) ctx.breadcrumbEl.textContent = 'Research';
         if (ctx.titleEl) ctx.titleEl.textContent = research.title || research.researchId || 'Research';
+        window.MAARS?.controlTower?.refresh?.(researchId).catch((error) => {
+            console.warn('Control Tower refresh failed', error);
+        });
 
         ctx.stageData.originalIdea = (idea?.idea || research.prompt || '').trim();
         ctx.stageData.papers = Array.isArray(idea?.papers) ? idea.papers : [];

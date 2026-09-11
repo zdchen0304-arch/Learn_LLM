@@ -1,0 +1,183 @@
+/** Research Director control-plane dashboard. */
+
+.control-tower {
+    margin: var(--gap) 0;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-area-secondary);
+}
+
+.control-tower-header,
+.control-tower-summary,
+.control-tower-node,
+.control-tower-gate,
+.control-tower-contract {
+    display: flex;
+    align-items: center;
+}
+
+.control-tower-header {
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.control-tower h3,
+.control-tower h4,
+.control-tower p {
+    margin: 0;
+}
+
+.control-tower h3 {
+    color: var(--text-color);
+    font-size: 15px;
+}
+
+.control-tower h4 {
+    color: var(--text-color);
+    font-size: 12px;
+}
+
+.control-tower-eyebrow,
+.control-tower-caption,
+.control-tower-contract-meta {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.control-tower-eyebrow {
+    margin-bottom: 3px !important;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.control-tower-status,
+.control-tower-gate-status,
+.control-tower-contract-status {
+    border: 1px solid var(--border-color);
+    border-radius: 99px;
+    padding: 3px 8px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.control-tower-decision {
+    margin-top: 10px !important;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.control-tower-summary {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.control-tower-metric {
+    padding: 5px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    background: var(--bg-area-tertiary);
+}
+
+.control-tower-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.control-tower-card {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-area-tertiary);
+}
+
+.control-tower-card--wide {
+    grid-column: 1 / -1;
+}
+
+.control-tower-caption {
+    margin-top: 3px !important;
+}
+
+.control-tower-organization,
+.control-tower-gates,
+.control-tower-contracts,
+.control-tower-evidence {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.control-tower-node,
+.control-tower-gate,
+.control-tower-contract {
+    gap: 7px;
+    min-width: 0;
+    padding: 6px 7px;
+    border-radius: 6px;
+    background: var(--bg-area-secondary);
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.control-tower-node--lead { margin-left: 12px; }
+.control-tower-node--worker { margin-left: 28px; }
+.control-tower-node-kind { color: var(--text-muted); font-size: 10px; }
+
+.control-tower-gate { align-items: flex-start; }
+.control-tower-gate-copy { min-width: 0; flex: 1; }
+.control-tower-gate-title { color: var(--text-color); font-size: 12px; text-transform: capitalize; }
+.control-tower-gate-reason { margin-top: 2px; color: var(--text-muted); font-size: 11px; line-height: 1.35; }
+
+.control-tower-contract { justify-content: space-between; align-items: flex-start; }
+.control-tower-contract-copy { min-width: 0; flex: 1; }
+.control-tower-contract-title { color: var(--text-color); font-size: 12px; }
+.control-tower-contract-meta { margin-top: 2px; line-height: 1.35; }
+
+.control-tower-evidence-item {
+    position: relative;
+    padding: 7px 8px 7px 19px;
+    border-left: 2px solid var(--accent-primary-border);
+    border-radius: 0 6px 6px 0;
+    background: var(--bg-area-secondary);
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.control-tower-evidence-item::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 12px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+}
+
+.control-tower-evidence-label { color: var(--text-color); }
+.control-tower-evidence-meta { margin-top: 2px; color: var(--text-muted); font-size: 11px; line-height: 1.35; }
+
+.control-tower-status[data-status="passed"],
+.control-tower-gate-status[data-status="passed"],
+.control-tower-contract-status[data-status="completed"] { color: var(--success-text); border-color: var(--success-border); background: var(--success-bg); }
+.control-tower-status[data-status="running"],
+.control-tower-gate-status[data-status="running"] { color: var(--accent-primary); border-color: var(--accent-primary-border); background: var(--accent-primary-soft); }
+.control-tower-gate-status[data-status="needs_revision"],
+.control-tower-gate-status[data-status="failed"],
+.control-tower-contract-status[data-status*="failed"] { color: var(--failure-text); border-color: var(--failure-border); background: var(--failure-bg); }
+
+@media (max-width: 760px) {
+    .control-tower-grid { grid-template-columns: 1fr; }
+    .control-tower-card--wide { grid-column: auto; }
+}

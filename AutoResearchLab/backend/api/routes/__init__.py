@@ -6,7 +6,7 @@
 
 from fastapi import FastAPI
 
-from . import db, events, execution, idea, log, paper, plan, plans, research, session, settings, status
+from . import async_tasks, db, events, execution, idea, log, paper, plan, plans, research, session, settings, status
 from ..state import init_api_state
 
 
@@ -29,3 +29,4 @@ def register_routes(
     app.include_router(idea.router, prefix="/api/idea", tags=["idea-agent"])
     app.include_router(paper.router, prefix="/api/paper", tags=["paper-agent"])
     app.include_router(status.router, prefix="/api/status", tags=["status"])
+    app.include_router(async_tasks.router, prefix="/api", tags=["async-runtime"])

@@ -107,6 +107,7 @@ async def clear_all_data() -> list[str]:
         "papers",
         "paper_reviews",
         "task_attempt_memories",
+        "async_tasks",
         "researches",
     ]
     async with base._db() as db:

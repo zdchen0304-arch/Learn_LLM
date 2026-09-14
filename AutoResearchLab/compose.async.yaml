@@ -1,0 +1,46 @@
+# Optional local infrastructure for decoupled, long-running research work.
+# Start with: docker compose -f compose.yaml -f compose.async.yaml up -d redis rabbitmq
+services:
+  maars-api:
+    environment:
+      MAARS_ASYNC_MODE: ${MAARS_ASYNC_MODE:-rabbitmq}
+      MAARS_REDIS_URL: ${MAARS_REDIS_URL:-redis://redis:6379/0}
+      MAARS_RABBITMQ_URL: ${MAARS_RABBITMQ_URL:-amqp://maars:change-me-locally@rabbitmq:5672/}
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${MAARS_REDIS_PORT:-6379}:6379"
+    volumes:
+      - maars-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "${MAARS_RABBITMQ_PORT:-5672}:5672"
+      - "${MAARS_RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${MAARS_RABBITMQ_USER:-maars}
+      RABBITMQ_DEFAULT_PASS: ${MAARS_RABBITMQ_PASSWORD:-change-me-locally}
+    volumes:
+      - maars-rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  maars-redis:
+  maars-rabbitmq:

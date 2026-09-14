@@ -58,6 +58,7 @@ from .db_research_ops import (
     save_task_attempt_memory,
     update_research_stage,
 )
+from .db_async_tasks import create_async_task, get_async_task, list_async_tasks, update_async_task
 
 
 async def clear_db() -> dict:

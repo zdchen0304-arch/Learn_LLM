@@ -78,3 +78,12 @@ class ResearchRunRequest(BaseModel):
     """Start/Restart the research pipeline for a researchId."""
     model_config = ConfigDict(populate_by_name=True)
     format: Optional[str] = Field(default="markdown", description="Paper output format")
+
+
+class AsyncTaskDispatchRequest(BaseModel):
+    """Queue one long-running research stage without putting its context in the message."""
+    model_config = ConfigDict(populate_by_name=True)
+    stage: str = Field(..., description="refine, plan, execute, paper, or review")
+    artifact_refs: list[str] = Field(default_factory=list, alias="artifactRefs")
+    idempotency_key: Optional[str] = Field(default=None, alias="idempotencyKey", max_length=256)
+    max_attempts: int = Field(default=3, alias="maxAttempts", ge=1, le=10)

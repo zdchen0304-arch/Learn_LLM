@@ -184,6 +184,26 @@ async def init_sqlite() -> None:
             )
             await db.execute(
                 """
+                CREATE TABLE IF NOT EXISTS async_tasks (
+                    task_id TEXT PRIMARY KEY,
+                    research_id TEXT NOT NULL,
+                    run_id TEXT NOT NULL,
+                    stage TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    context_ref TEXT NOT NULL,
+                    artifact_refs TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL UNIQUE,
+                    trace_id TEXT NOT NULL,
+                    attempt INTEGER NOT NULL,
+                    max_attempts INTEGER NOT NULL,
+                    error TEXT,
+                    created_at REAL NOT NULL,
+                    updated_at REAL NOT NULL
+                )
+                """
+            )
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS settings (
                     settings_key TEXT PRIMARY KEY,
                     data TEXT NOT NULL,
@@ -202,6 +222,9 @@ async def init_sqlite() -> None:
             )
             await db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_task_attempt_memories_updated ON task_attempt_memories(research_id, updated_at DESC)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_async_tasks_research_updated ON async_tasks(research_id, updated_at DESC)"
             )
             await db.commit()
 

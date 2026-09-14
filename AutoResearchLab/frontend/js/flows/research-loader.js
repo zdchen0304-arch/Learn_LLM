@@ -58,7 +58,7 @@
                     const s = order[i];
                     stageStatusDetails[s] = { status: 'completed', message: 'completed' };
                 }
-            } else if (rss === 'running' || rss === 'stopped' || rss === 'failed') {
+            } else if (rss === 'running' || rss === 'queued' || rss === 'stopped' || rss === 'failed' || rss === 'needs_revision') {
                 for (let i = 0; i < rank; i += 1) {
                     const s = order[i];
                     stageStatusDetails[s] = { status: 'completed', message: 'completed' };
@@ -171,7 +171,7 @@
         try {
             const stageStatus = String(research.stageStatus || '').trim().toLowerCase();
             if (stageStatus === 'idle') {
-                await ctx.api.runResearch(researchId);
+                await ctx.api.runResearch(researchId, ctx.getExecutionMode?.() || 'sync');
             }
         } catch (e) {
             const msg = String(e?.message || '');

@@ -42,13 +42,15 @@ docker compose -f compose.yaml -f compose.async.yaml up -d
 docker compose -f compose.yaml -f compose.async.yaml ps
 ```
 
-预期看到以下三个服务均为 `healthy`：
+预期看到 API、Redis、RabbitMQ 均为 `healthy`，以及五个 `maars-worker-*`
+服务为 `running`：
 
 | 服务 | 默认端口 | 职责 |
 |---|---:|---|
 | `maars-api` | 3001 | Web API 与研究流程 |
 | `redis` | 6379 | 上下文快照、幂等键 |
 | `rabbitmq` | 5672 | 异步任务消息队列 |
+| `maars-worker-refine` / `plan` / `execute` / `paper` / `review` | 无对外端口 | 各阶段的常驻消费者与 Director 交接 |
 
 RabbitMQ 管理后台地址为 <http://localhost:15672>。本地默认账号密码为
 `maars` / `change-me-locally`；仅用于本机开发，部署前必须改为自己的强密码。
@@ -88,7 +90,20 @@ Invoke-RestMethod "http://127.0.0.1:3001/api/async-runtime/status" -Headers $hea
 }
 ```
 
-## 3. 创建研究并投递异步任务
+## 3. 推荐：从网页选择运行模式
+
+打开 <http://localhost:3001/research.html>，输入研究主题后，在 **运行模式** 中选择：
+
+- **同步运行**：保留原有体验。FastAPI 在当前网页会话中串行执行，并通过实时事件更新页面。
+- **异步队列运行**：创建后由 Redis/RabbitMQ/常驻 Worker 执行；页面可关闭或刷新。每个阶段完成后，Research Director 检查质量门，只有通过才自动投递下一阶段。
+
+详情页顶部也可切换模式，供后续的 Run / Retry / Resume 使用。异步模式的 Stop
+按钮会禁用：RabbitMQ 已投递工作不能通过浏览器安全地强杀，失败后请使用 Retry
+创建新的任务记录。
+
+任务状态在工作台的阶段卡片、Control Tower 和 `async-tasks` 接口中可见。刷新详情页即可读取 SQLite 的最新状态；不需要打开 PowerShell 启动 Worker。
+
+## 4. API 方式创建研究并投递异步任务（可选）
 
 先创建一条研究记录：
 
@@ -130,32 +145,28 @@ Invoke-RestMethod `
   -Headers $headers
 ```
 
-## 4. 启动 Worker
+## 5. 常驻 Worker 与 Director 自动交接
 
-另开一个 PowerShell 窗口，仍在项目根目录执行。下面命令启动 Refine Worker：
-
-```powershell
-docker compose -f compose.yaml -f compose.async.yaml exec maars-api sh -lc `
-  'MAARS_ASYNC_HANDLER=async_runtime.worker_adapters:refine python -m async_runtime.worker --stage refine'
-```
-
-其他阶段仅替换最后两处阶段名称：
+`compose.async.yaml` 已定义五个阶段 Worker。执行第 1 节的 `up -d --build`
+后它们会随 Docker 自动常驻和重启，无需手动开新的 PowerShell。每个 Worker 只消费
+自己的队列，执行完成后执行以下控制流：
 
 ```text
-plan    -> async_runtime.worker_adapters:plan    / --stage plan
-execute -> async_runtime.worker_adapters:execute / --stage execute
-paper   -> async_runtime.worker_adapters:paper   / --stage paper
-review  -> async_runtime.worker_adapters:review  / --stage review
+阶段 Worker 完成 → SQLite 持久化产物 → Director 质量门 → 通过则投递下一阶段
+                                                    └ 未通过：failed / needs_revision，不自动越过
 ```
 
-Worker 会从 RabbitMQ 取得消息，再从 Redis 读取 `contextRef`，并从 SQLite/
-artifacts 重新加载真实研究状态。按 `Ctrl+C` 可停止当前 Worker；消息和已完成
-产物不会因此被删除。
+实时查看 Worker：
 
-> 推荐按阶段启动：先完成 `refine`，再投递/启动 `plan`，然后依次执行
-> `execute`、`paper`、`review`。这样便于观察质量门和失败恢复。
+```powershell
+docker compose -f compose.yaml -f compose.async.yaml ps
+docker compose -f compose.yaml -f compose.async.yaml logs -f maars-worker-refine maars-worker-plan
+```
 
-## 5. 真实基础设施自检
+需要临时停止一个消费者时（例如排查队列）可执行 `docker compose ... stop maars-worker-plan`；
+待恢复后执行 `docker compose ... start maars-worker-plan`。消息与已完成产物不会被删除。
+
+## 6. 真实基础设施自检
 
 此测试不会调用模型 API、不会运行 Docker 沙盒实验；它只验证 Redis 写入、
 RabbitMQ 发布/消费、SQLite 状态更新和清理：
@@ -167,7 +178,7 @@ docker compose -f compose.yaml -f compose.async.yaml exec -T maars-api `
 
 预期：`1 passed`。
 
-## 6. 常见问题
+## 7. 常见问题
 
 ### Docker CLI 提示 `Access is denied`
 
@@ -190,8 +201,12 @@ docker compose -f compose.yaml -f compose.async.yaml logs --tail 100 redis rabbi
 
 ### 任务状态一直是 `queued`
 
-说明消息已投递，但对应阶段 Worker 尚未启动。按第 4 节启动同名 `--stage` 的
-Worker。
+先执行 `docker compose -f compose.yaml -f compose.async.yaml ps`，确认对应的
+`maars-worker-<stage>` 为 `running`。再查看它的日志：
+
+```powershell
+docker compose -f compose.yaml -f compose.async.yaml logs --tail 100 maars-worker-refine
+```
 
 ### 任务变为 `failed`
 
@@ -206,7 +221,7 @@ Worker。
 docker compose -f compose.yaml -f compose.async.yaml up --build -d maars-api
 ```
 
-## 7. 停止或清理
+## 8. 停止或清理
 
 停止服务但保留 Redis/RabbitMQ 数据卷：
 

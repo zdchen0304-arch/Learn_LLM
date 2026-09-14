@@ -45,3 +45,26 @@ def test_async_runtime_status_is_explicit_when_not_configured(client, session_he
     response = client.get("/api/async-runtime/status", headers=session_headers)
     assert response.status_code == 200
     assert response.json()["ready"] is False
+
+
+def test_research_run_endpoint_accepts_async_mode_and_queues_refine(client, session_headers, monkeypatch):
+    from api.routes import async_tasks
+
+    runtime = AsyncResearchRuntime(context_store=InMemoryContextStore(), broker=InMemoryTaskBroker())
+    monkeypatch.setattr(async_tasks, "_runtime", runtime)
+    created = client.post("/api/research", json={"prompt": "Queue this research"}, headers=session_headers)
+    research_id = created.json()["researchId"]
+
+    response = client.post(
+        f"/api/research/{research_id}/run",
+        json={"executionMode": "async"},
+        headers=session_headers,
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["mode"] == "async-queued"
+    assert payload["task"]["stage"] == "refine"
+
+    record = client.get(f"/api/research/{research_id}", headers=session_headers).json()["research"]
+    assert record["stage"] == "refine"
+    assert record["stageStatus"] == "queued"

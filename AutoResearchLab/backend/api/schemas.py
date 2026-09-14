@@ -78,6 +78,7 @@ class ResearchRunRequest(BaseModel):
     """Start/Restart the research pipeline for a researchId."""
     model_config = ConfigDict(populate_by_name=True)
     format: Optional[str] = Field(default="markdown", description="Paper output format")
+    execution_mode: str = Field(default="sync", alias="executionMode", description="sync or async")
 
 
 class AsyncTaskDispatchRequest(BaseModel):

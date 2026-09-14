@@ -1,5 +1,53 @@
 # Optional local infrastructure for decoupled, long-running research work.
-# Start with: docker compose -f compose.yaml -f compose.async.yaml up -d redis rabbitmq
+# Start with: docker compose -f compose.yaml -f compose.async.yaml up -d --build
+# Each worker consumes one durable stage queue and stays up across API restarts.
+x-worker-environment: &worker-environment
+  MAARS_DB_PATH: /data/maars.sqlite3
+  MAARS_ARTIFACTS_DIR: /data/artifacts
+  MAARS_LOGS_DIR: /data/logs
+  MAARS_SANDBOX_DIR: /data/sandbox
+  MAARS_SESSION_SECRET: ${MAARS_SESSION_SECRET:?Copy .env.example to .env and set MAARS_SESSION_SECRET}
+  MAARS_API_KEY: ${MAARS_API_KEY:-}
+  MAARS_MODEL: ${MAARS_MODEL:-}
+  MAARS_API_BASE_URL: ${MAARS_API_BASE_URL:-}
+  MAARS_LLM_PROVIDER: ${MAARS_LLM_PROVIDER:-gemini}
+  MAARS_BACKEND_LOG_LEVEL: ${MAARS_BACKEND_LOG_LEVEL:-INFO}
+  MAARS_TASK_WEB_ENABLED: ${MAARS_TASK_WEB_ENABLED:-0}
+  MAARS_MOCK_STREAM_DELAY_MS: ${MAARS_MOCK_STREAM_DELAY_MS:-0}
+  MAARS_MOCK_EXECUTION_PASS_PROBABILITY: ${MAARS_MOCK_EXECUTION_PASS_PROBABILITY:-1.0}
+  MAARS_MOCK_VALIDATION_PASS_PROBABILITY: ${MAARS_MOCK_VALIDATION_PASS_PROBABILITY:-1.0}
+  MAARS_DOCKER_IMAGE: ${MAARS_DOCKER_IMAGE:-maars-task-python:local}
+  MAARS_ASYNC_MODE: ${MAARS_ASYNC_MODE:-rabbitmq}
+  MAARS_REDIS_URL: ${MAARS_REDIS_URL:-redis://redis:6379/0}
+  MAARS_RABBITMQ_URL: ${MAARS_RABBITMQ_URL:-amqp://maars:change-me-locally@rabbitmq:5672/}
+  MAARS_REDIS_KEY_PREFIX: ${MAARS_REDIS_KEY_PREFIX:-maars}
+  MAARS_CONTEXT_TTL_SECONDS: ${MAARS_CONTEXT_TTL_SECONDS:-86400}
+
+x-worker-common: &worker-common
+  image: maars-api:local
+  restart: unless-stopped
+  # The image healthcheck probes FastAPI on port 3001; workers do not expose
+  # HTTP, so a process-level restart policy is the appropriate liveness guard.
+  healthcheck:
+    disable: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  mem_limit: 2g
+  cpus: 2
+  volumes:
+    - maars-data:/data
+  environment: *worker-environment
+  depends_on:
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
 services:
   maars-api:
     environment:
@@ -40,6 +88,41 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+
+  maars-worker-refine:
+    <<: *worker-common
+    environment:
+      <<: *worker-environment
+      MAARS_ASYNC_HANDLER: async_runtime.worker_adapters:refine
+    command: ["python", "-m", "async_runtime.worker", "--stage", "refine"]
+
+  maars-worker-plan:
+    <<: *worker-common
+    environment:
+      <<: *worker-environment
+      MAARS_ASYNC_HANDLER: async_runtime.worker_adapters:plan
+    command: ["python", "-m", "async_runtime.worker", "--stage", "plan"]
+
+  maars-worker-execute:
+    <<: *worker-common
+    environment:
+      <<: *worker-environment
+      MAARS_ASYNC_HANDLER: async_runtime.worker_adapters:execute
+    command: ["python", "-m", "async_runtime.worker", "--stage", "execute"]
+
+  maars-worker-paper:
+    <<: *worker-common
+    environment:
+      <<: *worker-environment
+      MAARS_ASYNC_HANDLER: async_runtime.worker_adapters:paper
+    command: ["python", "-m", "async_runtime.worker", "--stage", "paper"]
+
+  maars-worker-review:
+    <<: *worker-common
+    environment:
+      <<: *worker-environment
+      MAARS_ASYNC_HANDLER: async_runtime.worker_adapters:review
+    command: ["python", "-m", "async_runtime.worker", "--stage", "review"]
 
 volumes:
   maars-redis:

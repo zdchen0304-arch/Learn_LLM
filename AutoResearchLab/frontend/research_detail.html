@@ -233,6 +233,13 @@
                     <div class="research-breadcrumb" id="researchBreadcrumb">Research</div>
                     <h2 class="research-title" id="researchTitle">Research</h2>
                     <div class="research-stage-row">
+                        <label class="research-run-mode" for="researchExecutionMode">
+                            <span>运行模式</span>
+                            <select id="researchExecutionMode" aria-label="Research run mode">
+                                <option value="sync">同步运行（网页实时反馈）</option>
+                                <option value="async">异步队列运行（Worker 常驻）</option>
+                            </select>
+                        </label>
                         <nav class="research-stage-progress" aria-label="Research pipeline stages">
                             <div class="research-stage-item" data-stage-item="refine">
                                 <button type="button" class="research-stage-btn" id="stageBtnRefine" data-stage="refine" aria-disabled="true" disabled>Refine</button>

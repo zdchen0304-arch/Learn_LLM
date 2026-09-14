@@ -21,11 +21,12 @@ idempotency key. They never contain a full paper, API key or research context.
 Docker Desktop must be healthy before starting infrastructure:
 
 ```powershell
-docker compose -f compose.yaml -f compose.async.yaml up -d redis rabbitmq
-$env:MAARS_ASYNC_MODE = "rabbitmq"
-$env:MAARS_REDIS_URL = "redis://localhost:6379/0"
-$env:MAARS_RABBITMQ_URL = "amqp://maars:change-me-locally@localhost:5672/"
+docker compose -f compose.yaml -f compose.async.yaml up -d --build
 ```
+
+This starts FastAPI, Redis, RabbitMQ and one restartable consumer for each
+stage. The browser can select `sync` or `async`; async runs survive a browser
+refresh because their state is persisted outside the API process.
 
 For tests and UI exploration without external services, use `MAARS_ASYNC_MODE=memory`.
 `memory` is intentionally not a production fallback: production misconfiguration
@@ -37,18 +38,18 @@ returns an explicit unavailable error instead of accepting work invisibly.
 2. Queue a stage through `POST /api/research/{researchId}/async-tasks`.
 3. Inspect readiness at `GET /api/async-runtime/status` and lifecycle records
    at `GET /api/research/{researchId}/async-tasks`.
-4. Run a dedicated worker:
+4. Compose runs dedicated workers automatically (`maars-worker-refine`, `plan`,
+   `execute`, `paper`, `review`). Each uses an adapter with signature:
 
-```powershell
-$env:MAARS_ASYNC_HANDLER = "async_runtime.worker_adapters:execute"
-python -m async_runtime.worker --stage execute
-```
-
-Built-in adapters are available for `refine`, `plan`, `execute`, `paper` and
-`review`, for example `async_runtime.worker_adapters:plan`. They reload the
+Built-in adapters reload the
 live research record and artifacts from SQLite instead of trusting a stale
 queue message. Custom adapters must be async functions with signature
 `async def handler(envelope, context)`.
+
+After a worker completes, `AsyncResearchCoordinator` builds a
+`ResearchDirector` snapshot from persisted artifacts. It queues the next stage
+only when that stage's upstream quality gate is `passed`; a failed gate is
+recorded as `failed` or `needs_revision` instead of being bypassed.
 
 ## Real infrastructure smoke test
 

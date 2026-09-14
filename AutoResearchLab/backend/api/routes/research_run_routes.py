@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from db import clear_research_stage_data_for_retry, get_research, update_research_stage
+from async_runtime import AsyncResearchCoordinator, RuntimeUnavailableError
 
 from .. import state as api_state
 from ..schemas import ResearchRunRequest
@@ -17,6 +18,7 @@ from .research_pipeline import (
     _is_session_busy,
     _start_stage_pipeline_task,
 )
+from .async_tasks import get_async_runtime
 
 router = APIRouter()
 
@@ -75,6 +77,28 @@ def _normalize_paper_format(value: Optional[str]) -> str:
     return paper_format
 
 
+def _normalize_execution_mode(value: str | None) -> str:
+    mode = str(value or "sync").strip().lower()
+    if mode not in {"sync", "async"}:
+        raise ValueError("executionMode must be sync or async")
+    return mode
+
+
+async def _queue_async_stage(research: dict, stage: str, session_id: str, mode: str):
+    try:
+        result = await AsyncResearchCoordinator(get_async_runtime()).queue_stage(research, stage)
+    except RuntimeUnavailableError as exc:
+        return JSONResponse(status_code=503, content={"error": str(exc)})
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    if result.get("duplicate"):
+        return JSONResponse(status_code=409, content=result)
+    return {
+        "success": True, "researchId": research["researchId"], "sessionId": session_id,
+        "mode": mode, "startStage": stage, "autoChain": True, "task": result.get("task"),
+    }
+
+
 def _run_response(mode: str, research_id: str, session_id: str, stage: str) -> dict:
     return {
         "success": True,
@@ -86,7 +110,7 @@ def _run_response(mode: str, research_id: str, session_id: str, stage: str) -> d
     }
 
 
-async def _prepare_stage_request(research_id: str, stage: str, request: Request):
+async def _prepare_stage_request(research_id: str, stage: str, request: Request, *, check_busy: bool = True):
     session_id, session = await api_state.require_session(request)
     normalized_stage = _normalize_stage(stage)
     research = await get_research(research_id)
@@ -95,7 +119,7 @@ async def _prepare_stage_request(research_id: str, stage: str, request: Request)
     prereq_err = await _check_stage_prerequisites(research, normalized_stage)
     if prereq_err:
         return None, JSONResponse(status_code=400, content={"error": prereq_err})
-    if _is_session_busy(session_id):
+    if check_busy and _is_session_busy(session_id):
         return None, JSONResponse(status_code=409, content={"error": "Another research pipeline is already running in this session"})
     return (session_id, session, research, normalized_stage), None
 
@@ -106,7 +130,11 @@ async def run_research_route(research_id: str, body: ResearchRunRequest, request
     research = await get_research(research_id)
     if not research:
         return JSONResponse(status_code=404, content={"error": "Research not found"})
-    if _is_session_busy(session_id):
+    try:
+        execution_mode = _normalize_execution_mode(body.execution_mode)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    if execution_mode == "sync" and _is_session_busy(session_id):
         return JSONResponse(status_code=409, content={"error": "Another research pipeline is already running in this session"})
 
     paper_format = _normalize_paper_format(body.format)
@@ -116,6 +144,8 @@ async def run_research_route(research_id: str, body: ResearchRunRequest, request
         research.get("currentPlanId"),
         "refine",
     )
+    if execution_mode == "async":
+        return await _queue_async_stage(research, "refine", session_id, "async-queued")
 
     _start_stage_pipeline_task(
         session_id=session_id,
@@ -175,7 +205,11 @@ async def retry_research_route(research_id: str, body: ResearchRunRequest, reque
     if not research:
         return JSONResponse(status_code=404, content={"error": "Research not found"})
 
-    if _is_session_busy(session_id):
+    try:
+        execution_mode = _normalize_execution_mode(body.execution_mode)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    if execution_mode == "sync" and _is_session_busy(session_id):
         return JSONResponse(status_code=409, content={"error": "Another research pipeline is already running in this session"})
 
     paper_format = _normalize_paper_format(body.format)
@@ -186,6 +220,8 @@ async def retry_research_route(research_id: str, body: ResearchRunRequest, reque
         research.get("currentPlanId"),
         start_stage,
     )
+    if execution_mode == "async":
+        return await _queue_async_stage(research, start_stage, session_id, "async-retry")
     _start_stage_pipeline_task(
         session_id=session_id,
         session=session,
@@ -206,10 +242,16 @@ async def retry_research_route(research_id: str, body: ResearchRunRequest, reque
 
 @router.post("/stage/{stage}/run")
 async def run_research_stage_route(research_id: str, stage: str, body: ResearchRunRequest, request: Request):
-    prepared, error = await _prepare_stage_request(research_id, stage, request)
+    try:
+        execution_mode = _normalize_execution_mode(body.execution_mode)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    prepared, error = await _prepare_stage_request(research_id, stage, request, check_busy=execution_mode == "sync")
     if error:
         return error
-    session_id, session, _research, stage = prepared
+    session_id, session, research, stage = prepared
+    if execution_mode == "async":
+        return await _queue_async_stage(research, stage, session_id, "async-queued")
     paper_format = _normalize_paper_format(body.format)
     _start_stage_pipeline_task(
         session_id=session_id,
@@ -224,7 +266,11 @@ async def run_research_stage_route(research_id: str, stage: str, body: ResearchR
 
 @router.post("/stage/{stage}/resume")
 async def resume_research_stage_route(research_id: str, stage: str, body: ResearchRunRequest, request: Request):
-    prepared, error = await _prepare_stage_request(research_id, stage, request)
+    try:
+        execution_mode = _normalize_execution_mode(body.execution_mode)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    prepared, error = await _prepare_stage_request(research_id, stage, request, check_busy=execution_mode == "sync")
     if error:
         return error
     session_id, session, research, stage = prepared
@@ -240,6 +286,8 @@ async def resume_research_stage_route(research_id: str, stage: str, body: Resear
                 )
             },
         )
+    if execution_mode == "async":
+        return await _queue_async_stage(research, stage, session_id, "async-resume")
     paper_format = _normalize_paper_format(body.format)
     _start_stage_pipeline_task(
         session_id=session_id,
@@ -254,7 +302,11 @@ async def resume_research_stage_route(research_id: str, stage: str, body: Resear
 
 @router.post("/stage/{stage}/retry")
 async def retry_research_stage_route(research_id: str, stage: str, body: ResearchRunRequest, request: Request):
-    prepared, error = await _prepare_stage_request(research_id, stage, request)
+    try:
+        execution_mode = _normalize_execution_mode(body.execution_mode)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    prepared, error = await _prepare_stage_request(research_id, stage, request, check_busy=execution_mode == "sync")
     if error:
         return error
     session_id, session, research, stage = prepared
@@ -264,6 +316,8 @@ async def retry_research_stage_route(research_id: str, stage: str, body: Researc
         research.get("currentPlanId"),
         stage,
     )
+    if execution_mode == "async":
+        return await _queue_async_stage(research, stage, session_id, "async-retry")
     _start_stage_pipeline_task(
         session_id=session_id,
         session=session,

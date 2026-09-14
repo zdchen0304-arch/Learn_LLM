@@ -35,7 +35,7 @@
             const info = stageStatusDetails[stage] || { status: 'idle' };
             const status = String(info.status || 'idle').trim() || 'idle';
             const stageStarted = !!currentStageState?.[stage]?.started;
-            const isRunningSelf = status === 'running';
+            const isRunningSelf = status === 'running' || status === 'queued';
             const executeRunnerActive = stage === 'execute' && !!(ctx.getExecutionRuntimeStatus()?.running);
             const isBusySelf = isRunningSelf || executeRunnerActive;
             const hasOtherRunning = !!runningStage && runningStage !== stage;
@@ -44,7 +44,8 @@
             if (actions?.run) actions.run.disabled = blocked || !prereqOk || isBusySelf;
             if (actions?.resume) actions.resume.disabled = blocked || !prereqOk || isBusySelf || !(status === 'stopped' || status === 'failed');
             if (actions?.retry) actions.retry.disabled = blocked || !prereqOk || isBusySelf || !(stageStarted || status === 'failed' || status === 'stopped');
-            if (actions?.stop) actions.stop.disabled = blocked || !(isRunningSelf || executeRunnerActive);
+            const asyncMode = ctx.getExecutionMode?.() === 'async';
+            if (actions?.stop) actions.stop.disabled = asyncMode || blocked || !(isRunningSelf || executeRunnerActive);
         });
     }
 
@@ -320,7 +321,7 @@
 
         ['refine', 'plan', 'execute', 'paper'].forEach((stage) => {
             bindStageAction(stage, 'run', async () => {
-                await ctx.api.runResearchStage(researchId, stage);
+                await ctx.api.runResearchStage(researchId, stage, ctx.getExecutionMode?.());
                 if (stage === 'execute') {
                     ctx.resetExecuteTimelineForNewRun();
                     if (ctx.getActiveStage() === 'execute') {
@@ -331,11 +332,11 @@
                 setActiveStage(ctx, stage);
             });
             bindStageAction(stage, 'resume', async () => {
-                await ctx.api.resumeResearchStage(researchId, stage);
+                await ctx.api.resumeResearchStage(researchId, stage, ctx.getExecutionMode?.());
                 setActiveStage(ctx, stage);
             });
             bindStageAction(stage, 'retry', async () => {
-                await ctx.api.retryResearchStage(researchId, stage);
+                await ctx.api.retryResearchStage(researchId, stage, ctx.getExecutionMode?.());
                 if (stage === 'execute') {
                     ctx.resetExecuteTimelineForNewRun();
                     if (ctx.getActiveStage() === 'execute') {
@@ -357,6 +358,17 @@
         initExecuteSplitter(ctx);
         ctx.initExecuteStreamControls();
         ctx.initEventBridges();
+
+        if (ctx.executionModeSelect) {
+            try {
+                const savedMode = localStorage.getItem('maars-research-execution-mode');
+                if (savedMode === 'sync' || savedMode === 'async') ctx.executionModeSelect.value = savedMode;
+            } catch (_) { }
+            ctx.executionModeSelect.addEventListener('change', () => {
+                try { localStorage.setItem('maars-research-execution-mode', ctx.getExecutionMode?.() || 'sync'); } catch (_) { }
+                renderStageStatusDetails(ctx);
+            });
+        }
 
         if (ctx.homeView && ctx.promptInput && ctx.createBtn) {
             ctx.createBtn.addEventListener('click', () => createResearchFromHome(ctx));

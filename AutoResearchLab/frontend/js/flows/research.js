@@ -14,6 +14,7 @@
     const researchView = document.getElementById('researchView');
     const promptInput = document.getElementById('researchPromptInput');
     const createBtn = document.getElementById('createResearchBtn');
+    const executionModeSelect = document.getElementById('researchExecutionMode');
 
     const breadcrumbEl = document.getElementById('researchBreadcrumb');
     const titleEl = document.getElementById('researchTitle');
@@ -142,6 +143,7 @@
             researchView,
             promptInput,
             createBtn,
+            executionModeSelect,
             stageButtons,
             stageMetaEls,
             stageActionBtns,
@@ -163,6 +165,7 @@
             executeRuntimeMetaEl,
             EXECUTE_TIMELINE_MAX_MESSAGES,
             getCurrentResearchId: () => currentResearchId,
+            getExecutionMode: () => (executionModeSelect?.value === 'async' ? 'async' : 'sync'),
             setCurrentResearchId: (id) => { currentResearchId = id; },
             getActiveStage: () => activeStage,
             setActiveStageValue: (stage) => { activeStage = String(stage || '').trim(); },

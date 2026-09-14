@@ -239,6 +239,13 @@
                 <div class="home-view-inner">
                     <div class="home-view-prompt">
                         <input type="text" id="researchPromptInput" class="idea-input home-view-input" placeholder="Ask anything to start a new research..." />
+                        <label class="research-run-mode" for="researchExecutionMode">
+                            <span>运行模式</span>
+                            <select id="researchExecutionMode" aria-label="Research run mode">
+                                <option value="sync">同步运行</option>
+                                <option value="async">异步队列运行</option>
+                            </select>
+                        </label>
                         <button id="createResearchBtn" type="button" class="btn-default">Create</button>
                     </div>
                 </div>

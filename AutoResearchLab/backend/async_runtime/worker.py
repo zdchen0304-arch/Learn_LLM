@@ -13,6 +13,9 @@ import importlib
 import inspect
 import os
 
+from loguru import logger
+
+from .coordinator import AsyncResearchCoordinator
 from .runtime import AsyncResearchRuntime
 
 
@@ -29,9 +32,24 @@ def _load_handler(path: str):
 async def serve(stage: str, handler_path: str, poll_seconds: float = 0.5) -> None:
     runtime = AsyncResearchRuntime.from_env()
     handler = _load_handler(handler_path)
+    coordinator = AsyncResearchCoordinator(runtime)
+
+    async def on_completed(envelope, _context) -> None:
+        try:
+            result = await coordinator.advance_after_completion(envelope)
+            logger.info("Director handoff for task {}: {}", envelope.task_id, result)
+        except Exception:
+            # The stage already completed. A transient dispatch failure must not replay it.
+            logger.exception("Director handoff failed after task {}", envelope.task_id)
+
+    async def on_failed(envelope, error) -> None:
+        try:
+            await coordinator.mark_failed(envelope, error)
+        except Exception:
+            logger.exception("Could not persist failed worker stage {}", envelope.task_id)
     try:
         while True:
-            consumed = await runtime.consume_once(stage, handler)
+            consumed = await runtime.consume_once(stage, handler, on_completed=on_completed, on_failed=on_failed)
             if not consumed:
                 await asyncio.sleep(poll_seconds)
     finally:

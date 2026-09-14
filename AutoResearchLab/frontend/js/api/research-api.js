@@ -43,8 +43,8 @@
         return _request(`/research/${encodeURIComponent(researchId)}`, {}, 'Failed to load research');
     }
 
-    async function runResearch(researchId) {
-        return _post(`/research/${encodeURIComponent(researchId)}/run`, { format: 'markdown' }, 'Failed to run research');
+    async function runResearch(researchId, executionMode) {
+        return _post(`/research/${encodeURIComponent(researchId)}/run`, { format: 'markdown', executionMode: executionMode || 'sync' }, 'Failed to run research');
     }
 
     async function stopResearch(researchId) {
@@ -55,30 +55,30 @@
         );
     }
 
-    async function retryResearch(researchId) {
-        return _post(`/research/${encodeURIComponent(researchId)}/retry`, { format: 'markdown' }, 'Failed to retry research');
+    async function retryResearch(researchId, executionMode) {
+        return _post(`/research/${encodeURIComponent(researchId)}/retry`, { format: 'markdown', executionMode: executionMode || 'sync' }, 'Failed to retry research');
     }
 
-    async function runResearchStage(researchId, stage) {
+    async function runResearchStage(researchId, stage, executionMode) {
         return _post(
             `/research/${encodeURIComponent(researchId)}/stage/${encodeURIComponent(stage)}/run`,
-            { format: 'markdown' },
+            { format: 'markdown', executionMode: executionMode || 'sync' },
             'Failed to run research stage',
         );
     }
 
-    async function resumeResearchStage(researchId, stage) {
+    async function resumeResearchStage(researchId, stage, executionMode) {
         return _post(
             `/research/${encodeURIComponent(researchId)}/stage/${encodeURIComponent(stage)}/resume`,
-            { format: 'markdown' },
+            { format: 'markdown', executionMode: executionMode || 'sync' },
             'Failed to resume research stage',
         );
     }
 
-    async function retryResearchStage(researchId, stage) {
+    async function retryResearchStage(researchId, stage, executionMode) {
         return _post(
             `/research/${encodeURIComponent(researchId)}/stage/${encodeURIComponent(stage)}/retry`,
-            { format: 'markdown' },
+            { format: 'markdown', executionMode: executionMode || 'sync' },
             'Failed to retry research stage',
         );
     }

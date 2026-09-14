@@ -81,7 +81,7 @@ class AsyncResearchRuntime:
             raise
         return {"duplicate": False, "task": {**envelope.to_dict(), "status": "queued"}}
 
-    async def consume_once(self, stage: str, handler) -> bool:
+    async def consume_once(self, stage: str, handler, *, on_completed=None, on_failed=None) -> bool:
         async def tracked_handler(envelope: AsyncTaskEnvelope) -> None:
             await update_async_task(envelope.task_id, status="running", attempt=envelope.attempt, error="")
             try:
@@ -91,8 +91,12 @@ class AsyncResearchRuntime:
                 await handler(envelope, context)
             except Exception as exc:
                 await update_async_task(envelope.task_id, status="failed", attempt=envelope.attempt + 1, error=str(exc)[:1024])
+                if on_failed is not None:
+                    await on_failed(envelope, exc)
                 raise
             await update_async_task(envelope.task_id, status="completed", attempt=envelope.attempt, error="")
+            if on_completed is not None:
+                await on_completed(envelope, context)
 
         return await self.broker.consume_once(stage, tracked_handler)
 

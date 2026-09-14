@@ -1,11 +1,17 @@
 .git
 .github
 .venv
+**/.venv
 venv
+**/venv
 env
+**/env
 __pycache__
+**/__pycache__
 *.py[cod]
 .pytest_cache
+**/.pytest_cache
+**/.pytest-tmp
 .mypy_cache
 .ruff_cache
 .coverage

@@ -246,6 +246,7 @@ async def delete_research_cascade(research_id: str) -> dict:
     async with base._db() as db:
         await db.execute("DELETE FROM researches WHERE research_id = ?", (research_id,))
         await db.execute("DELETE FROM task_attempt_memories WHERE research_id = ?", (research_id,))
+        await db.execute("DELETE FROM async_tasks WHERE research_id = ?", (research_id,))
 
         if idea_id:
             await db.execute("DELETE FROM ideas WHERE idea_id = ?", (idea_id,))

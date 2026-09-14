@@ -50,6 +50,16 @@ live research record and artifacts from SQLite instead of trusting a stale
 queue message. Custom adapters must be async functions with signature
 `async def handler(envelope, context)`.
 
+## Real infrastructure smoke test
+
+After the containers are healthy, this test verifies a Redis context write,
+RabbitMQ publish/consume round trip, and SQLite lifecycle update without
+calling an LLM:
+
+```powershell
+docker compose -f compose.yaml -f compose.async.yaml exec -T maars-api pytest tests/cross_agent/integration/test_real_async_runtime.py -q
+```
+
 ## Failure semantics
 
 - Redis `SET NX` rejects duplicate idempotency keys.

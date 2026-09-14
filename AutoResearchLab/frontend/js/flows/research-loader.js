@@ -5,6 +5,19 @@
     'use strict';
 
     const { seedExecutionState } = window.MAARS?.researchExecuteState || {};
+    let asyncPollTimer = 0;
+
+    function scheduleAsyncRefresh(ctx, researchId, stageStatus) {
+        if (asyncPollTimer) {
+            window.clearTimeout(asyncPollTimer);
+            asyncPollTimer = 0;
+        }
+        if (!['queued', 'running'].includes(String(stageStatus || '').toLowerCase())) return;
+        asyncPollTimer = window.setTimeout(() => {
+            if (String(ctx.getCurrentResearchId?.() || '') !== String(researchId)) return;
+            loadResearch(ctx, researchId).catch((error) => console.warn('Async research refresh failed', error));
+        }, 3000);
+    }
 
     async function loadResearch(ctx, researchId) {
         ctx.setCurrentResearchId(researchId);
@@ -49,6 +62,7 @@
         });
         const rs = String(research.stage || 'refine').trim() || 'refine';
         const rss = String(research.stageStatus || 'idle').trim() || 'idle';
+        scheduleAsyncRefresh(ctx, researchId, rss);
         const order = ['refine', 'plan', 'execute', 'paper'];
         const rank = order.indexOf(rs);
         const stageStatusDetails = ctx.getStageStatusDetails();
@@ -171,7 +185,10 @@
         try {
             const stageStatus = String(research.stageStatus || '').trim().toLowerCase();
             if (stageStatus === 'idle') {
-                await ctx.api.runResearch(researchId, ctx.getExecutionMode?.() || 'sync');
+                const result = await ctx.api.runResearch(researchId, ctx.getExecutionMode?.() || 'sync');
+                if (String(result?.mode || '').startsWith('async')) {
+                    scheduleAsyncRefresh(ctx, researchId, 'queued');
+                }
             }
         } catch (e) {
             const msg = String(e?.message || '');

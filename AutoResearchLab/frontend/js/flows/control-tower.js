@@ -27,7 +27,14 @@
     }
 
     function label(value) {
-        return String(value || 'pending').replace(/_/g, ' ');
+        const labels = {
+            refine: '问题细化', plan: '研究规划', execute: '实验执行', paper: '论文撰写', review: '论文审查',
+            idle: '未开始', pending: '等待中', queued: '已入队', running: '执行中', completed: '已完成',
+            passed: '已通过', blocked: '被阻塞', failed: '失败', stopped: '已停止', needs_revision: '需要修改',
+            supervisor: '总监', lead: '负责人', worker: '执行 Agent',
+        };
+        const raw = String(value || 'pending');
+        return labels[raw] || raw.replace(/_/g, ' ');
     }
 
     function renderOrganization(nodes) {
@@ -37,7 +44,7 @@
                 <span>${escapeHtml(node?.name || 'Unnamed agent')}</span>
                 <span class="control-tower-node-kind">${escapeHtml(kind)}</span>
             </div>`;
-        }).join('') || '<div class="control-tower-caption">No delegation map available.</div>';
+        }).join('') || '<div class="control-tower-caption">暂时没有可展示的委派关系。</div>';
     }
 
     function renderGates(gates) {
@@ -50,32 +57,32 @@
                 </div>
                 <span class="control-tower-gate-status" data-status="${escapeHtml(status)}">${escapeHtml(label(status))}</span>
             </div>`;
-        }).join('') || '<div class="control-tower-caption">No quality gates available.</div>';
+        }).join('') || '<div class="control-tower-caption">暂时没有可展示的质量门。</div>';
     }
 
     function renderContracts(contracts) {
         contractsEl.innerHTML = (Array.isArray(contracts) ? contracts : []).map((contract) => {
-            const dependencies = (contract?.dependsOn || []).join(', ') || 'none';
-            const outputs = (contract?.expectedOutputs || []).join(', ') || 'artifact';
+            const dependencies = (contract?.dependsOn || []).join(', ') || '无';
+            const outputs = (contract?.expectedOutputs || []).join(', ') || '产物';
             const status = String(contract?.status || 'pending');
             return `<div class="control-tower-contract">
                 <div class="control-tower-contract-copy">
                     <div class="control-tower-contract-title">${escapeHtml(contract?.owner || 'Worker')} · ${escapeHtml(contract?.goal || '')}</div>
-                    <div class="control-tower-contract-meta">ID: ${escapeHtml(contract?.contractId || '')} · depends on: ${escapeHtml(dependencies)} · delivers: ${escapeHtml(outputs)}</div>
+                    <div class="control-tower-contract-meta">编号：${escapeHtml(contract?.contractId || '')} · 依赖：${escapeHtml(dependencies)} · 交付：${escapeHtml(outputs)}</div>
                 </div>
                 <span class="control-tower-contract-status" data-status="${escapeHtml(status)}">${escapeHtml(label(status))}</span>
             </div>`;
-        }).join('') || '<div class="control-tower-caption">No task contracts available.</div>';
+        }).join('') || '<div class="control-tower-caption">暂时没有可展示的阶段交接契约。</div>';
     }
 
     function renderEvidence(trail) {
         evidenceEl.innerHTML = (Array.isArray(trail) ? trail : []).map((artifact) => {
-            const dependencies = (artifact?.dependsOn || []).join(', ') || 'source artifact';
+            const dependencies = (artifact?.dependsOn || []).join(', ') || '源产物';
             return `<div class="control-tower-evidence-item">
                 <div class="control-tower-evidence-label">${escapeHtml(artifact?.label || artifact?.artifactId || 'Artifact')}</div>
-                <div class="control-tower-evidence-meta">${escapeHtml(artifact?.kind || 'artifact')} · by ${escapeHtml(artifact?.producedBy || 'worker')} · from ${escapeHtml(dependencies)}</div>
+                <div class="control-tower-evidence-meta">${escapeHtml(artifact?.kind || '产物')} · 由 ${escapeHtml(artifact?.producedBy || '执行 Agent')} 生成 · 依赖 ${escapeHtml(dependencies)}</div>
             </div>`;
-        }).join('') || '<div class="control-tower-caption">Evidence will appear as agents persist artifacts.</div>';
+        }).join('') || '<div class="control-tower-caption">Agent 持久化文献、实验或论文产物后，证据链会显示在这里。</div>';
     }
 
     function render(snapshot) {
@@ -85,13 +92,13 @@
         host.hidden = false;
         statusEl.textContent = `${director.activeStage || 'refine'} · ${label(stageStatus)}`;
         statusEl.dataset.status = stageStatus;
-        decisionEl.textContent = director.decision || 'The Research Director is preparing delegation contracts.';
+        decisionEl.textContent = director.decision || '研究总监正在准备阶段交接契约。';
         const metrics = [
-            `${Number(artifacts.literatureCount || 0)} literature items`,
-            `${Number(artifacts.planTaskCount || 0)} planned tasks`,
-            `${Number(artifacts.executionOutputCount || 0)} evidence outputs`,
-            artifacts.hasPaperDraft ? 'paper draft available' : 'no paper draft',
-            artifacts.hasPaperQualityReview ? `${Number(artifacts.paperReviewBlockingIssueCount || 0)} blocking review issues` : 'review pending',
+            `${Number(artifacts.literatureCount || 0)} 篇文献`,
+            `${Number(artifacts.planTaskCount || 0)} 个规划任务`,
+            `${Number(artifacts.executionOutputCount || 0)} 个实验产物`,
+            artifacts.hasPaperDraft ? '论文草稿已生成' : '暂无论文草稿',
+            artifacts.hasPaperQualityReview ? `${Number(artifacts.paperReviewBlockingIssueCount || 0)} 个审查阻塞项` : '论文审查待执行',
         ];
         summaryEl.innerHTML = metrics.map((metric) => `<span class="control-tower-metric">${escapeHtml(metric)}</span>`).join('');
         renderOrganization(snapshot?.agentOrganization);

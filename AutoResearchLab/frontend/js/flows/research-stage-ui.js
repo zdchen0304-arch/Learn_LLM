@@ -304,6 +304,9 @@
                 try {
                     await handler();
                     document.dispatchEvent(new CustomEvent('maars:research-list-refresh'));
+                    if (ctx.getExecutionMode?.() === 'async') {
+                        await ctx.loadResearch?.(researchId);
+                    }
                 } catch (e) {
                     console.error(e);
                     const msg = String(e?.message || '').trim();

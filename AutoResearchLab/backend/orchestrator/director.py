@@ -13,33 +13,33 @@ from typing import Any
 STAGE_DEFINITIONS = (
     {
         "stage": "refine",
-        "lead": "Literature Lead",
-        "workers": ["Literature Scout", "Evidence Curator"],
-        "goal": "Convert a broad topic into an evidence-grounded research question.",
+        "lead": "文献负责人",
+        "workers": ["文献检索 Agent", "证据整理 Agent"],
+        "goal": "将宽泛主题收敛为有证据支撑的研究问题。",
         "expectedOutputs": ["keywords", "papers", "refined_idea"],
         "dependsOn": [],
     },
     {
         "stage": "plan",
-        "lead": "Planning Lead",
-        "workers": ["Task Decomposer", "Method Designer"],
-        "goal": "Create an atomic, dependency-aware research plan.",
+        "lead": "规划负责人",
+        "workers": ["任务分解 Agent", "方法设计 Agent"],
+        "goal": "生成原子化、具备依赖关系的研究计划。",
         "expectedOutputs": ["task_dag", "acceptance_criteria"],
         "dependsOn": ["refine"],
     },
     {
         "stage": "execute",
-        "lead": "Execution Lead",
-        "workers": ["Experiment Worker", "Validation Worker"],
-        "goal": "Produce and validate the planned research artifacts.",
+        "lead": "执行负责人",
+        "workers": ["实验执行 Agent", "结果验证 Agent"],
+        "goal": "产出并验证计划中的研究成果。",
         "expectedOutputs": ["task_outputs", "validation_reports"],
         "dependsOn": ["plan"],
     },
     {
         "stage": "paper",
-        "lead": "Writing Lead",
-        "workers": ["Section Writer", "Paper Quality Reviewer"],
-        "goal": "Synthesize validated artifacts into a traceable paper draft.",
+        "lead": "写作负责人",
+        "workers": ["章节写作 Agent", "论文质量审查 Agent"],
+        "goal": "将验证后的产物整合为可追溯的论文草稿。",
         "expectedOutputs": ["paper_draft", "paper_quality_review"],
         "dependsOn": ["execute"],
     },
@@ -110,8 +110,8 @@ class ResearchDirector:
         return {
             "researchId": research.get("researchId"),
             "director": {
-                "name": "Research Director",
-                "role": "control-plane supervisor",
+                "name": "研究总监",
+                "role": "控制面监督者",
                 "activeStage": active_stage,
                 "stageStatus": stage_status,
                 "decision": director_decision,
@@ -180,22 +180,22 @@ class ResearchDirector:
     @staticmethod
     def _gate_reason(stage: str, status: str) -> str:
         if status == "passed":
-            return "Required artifacts are available for the next delegation."
+            return "所需产物已齐备，可以委派下一阶段。"
         if status == "running":
-            return "The Director is waiting for the current delegation to satisfy its contract."
+            return "研究总监正在等待当前阶段满足交接契约。"
         if status == "failed":
-            return "The current stage failed validation and requires retry or re-planning."
+            return "当前阶段未通过验证，需要重试或重新规划。"
         if status == "needs_revision":
-            return "The paper review found blocking issues; revise claims or supporting evidence."
+            return "论文审查发现阻塞问题，需要修改论断或补充支撑证据。"
         if status == "blocked":
-            return "An upstream quality gate has not passed."
+            return "上游质量门尚未通过。"
         if stage == "paper":
-            return "A paper draft and a paper-quality review are required before completion."
-        return "Awaiting its upstream contract and required artifacts."
+            return "完成前必须具备论文草稿和论文质量审查结果。"
+        return "正在等待上游交接条件和所需产物。"
 
     @staticmethod
     def _organization() -> list[dict[str, Any]]:
-        result = [{"id": "director", "name": "Research Director", "reportsTo": None, "kind": "supervisor"}]
+        result = [{"id": "director", "name": "研究总监", "reportsTo": None, "kind": "supervisor"}]
         for definition in STAGE_DEFINITIONS:
             lead_id = f"lead:{definition['stage']}"
             result.append({"id": lead_id, "name": definition["lead"], "reportsTo": "director", "kind": "lead"})
@@ -243,8 +243,8 @@ class ResearchDirector:
             contracts.append(
                 {
                     "contractId": f"task:{task_id}",
-                    "owner": "Experiment Worker",
-                    "goal": task.get("description") or "Execute planned research task.",
+                    "owner": "实验执行 Agent",
+                    "goal": task.get("description") or "执行已规划的研究任务。",
                     "dependsOn": [f"task:{item}" for item in (task.get("dependencies") or [])],
                     "expectedOutputs": [expected_output],
                     "status": task_statuses.get(task_id, "pending"),
@@ -269,7 +269,7 @@ class ResearchDirector:
                     "artifactId": f"literature:{index}",
                     "kind": "literature",
                     "label": title or f"Literature item {index + 1}",
-                    "producedBy": "Literature Scout",
+                    "producedBy": "文献检索 Agent",
                     "dependsOn": [],
                 }
             )
@@ -282,7 +282,7 @@ class ResearchDirector:
                     "artifactId": f"plan:{task_id}",
                     "kind": "task_specification",
                     "label": task.get("title") or task.get("description") or f"Task {task_id}",
-                    "producedBy": "Task Decomposer",
+                    "producedBy": "任务分解 Agent",
                     "dependsOn": [f"plan:{dependency}" for dependency in (task.get("dependencies") or [])],
                 }
             )
@@ -294,7 +294,7 @@ class ResearchDirector:
                     "artifactId": f"output:{task_id}",
                     "kind": "validated_output",
                     "label": label,
-                    "producedBy": "Experiment Worker",
+                    "producedBy": "实验执行 Agent",
                     "dependsOn": [f"plan:{task_id}"],
                 }
             )
@@ -303,8 +303,8 @@ class ResearchDirector:
                 {
                     "artifactId": "paper:draft",
                     "kind": "paper_draft",
-                    "label": "Paper draft",
-                    "producedBy": "Section Writer",
+                    "label": "论文草稿",
+                    "producedBy": "章节写作 Agent",
                     "dependsOn": [f"output:{task_id}" for task_id in (outputs or {}).keys()],
                 }
             )
@@ -313,8 +313,8 @@ class ResearchDirector:
                 {
                     "artifactId": "paper:review",
                     "kind": "quality_review",
-                    "label": "Paper quality review",
-                    "producedBy": "Paper Quality Reviewer",
+                    "label": "论文质量审查",
+                    "producedBy": "论文质量审查 Agent",
                     "dependsOn": ["paper:draft"],
                 }
             )
@@ -324,13 +324,13 @@ class ResearchDirector:
     def _decision(active_stage: str, stage_status: str, gates: list[dict]) -> str:
         current = next((gate for gate in gates if gate["stage"] == active_stage), None)
         if current and current["status"] == "failed":
-            return f"Re-plan or retry {active_stage}: its quality gate failed."
+            return f"{active_stage} 未通过质量门：请重新规划或重试。"
         revision_gate = next((gate for gate in gates if gate["status"] == "needs_revision"), None)
         if revision_gate:
-            return f"Revise {revision_gate['stage']} using the blocking findings from its quality review."
+            return f"请依据论文审查的阻塞问题修改 {revision_gate['stage']} 阶段。"
         next_gate = next((gate for gate in gates if gate["status"] in {"pending", "blocked"}), None)
         if next_gate:
-            return f"Delegate {next_gate['stage']} when its upstream gate is satisfied."
+            return f"上游质量门通过后，委派 {next_gate['stage']} 阶段。"
         if stage_status == "running":
-            return f"Monitor {active_stage} and wait for contract completion."
-        return "All visible contracts are complete; verify final review findings before publishing."
+            return f"正在监控 {active_stage} 阶段，等待其完成交接契约。"
+        return "所有可见交接契约均已完成；发布前请确认最终审查结论。"
